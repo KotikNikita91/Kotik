@@ -22,7 +22,7 @@ body {
 }
 
 .container {
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: rgba(255, 255, 255, 0.92);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   padding: 30px;
@@ -56,6 +56,8 @@ label {
 }
 
 input, select {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-color: #d1e7dd;
   width: 100%;
   padding: 14px 16px;
   border: 2px solid #e0e0e0;
@@ -78,7 +80,7 @@ button {
   padding: 16px;
   background: var(--primary-color);
   background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
-  color: white;
+  color: #2d4538;
   border: none;
   border-radius: 10px;
   font-size: 16px;
@@ -94,6 +96,8 @@ button {
 }
 
 button:hover {
+  background: linear-gradient(to right, var(--primary-dark), #5a8f7b);
+  color: white;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
 }
@@ -144,7 +148,8 @@ button:active {
 }
 
 .toast.success {
-  background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+  background: linear-gradient(to right, #88c9a1, #6abf8b);
+  color: #2d4538;
 }
 
 .toast.error {

@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('date').value = today;
     
     // URL вашего Google Apps Script (ЗАМЕНИТЕ на ваш реальный ID!)
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbySRyS0GrVAZPVzX767GzR9Im91TkpPlZSS_ev1HkRs4yxUcSF9OEbObhv5BXZVIHIepg/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxF4DtXNNpib9q6jBKbIu3See4I_wSkuzUJLcxpD5QCtWZe6FmanIva1Xq_HDIc1rWG5Q/exec';
     
     form.addEventListener('submit', async (e) => {
         e.preventDefault();

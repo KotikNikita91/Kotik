@@ -1,2 +1,1 @@
-# Kotik
-Бюджет нашей семьи
+# family-budget

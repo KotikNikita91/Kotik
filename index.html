@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Семейный бюджет</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <!-- Иконка для главного экрана -->
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="apple-mobile-web-app-title" content="Бюджет">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-wallet"></i> Семейный бюджет</h1>
+      
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="add"><i class="fas fa-plus-circle"></i> Добавить</button>
+        <button class="tab-btn" data-tab="stats"><i class="fas fa-chart-pie"></i> Статистика</button>
+      </div>
+    </header>
+
+    <main>
+      <div id="add" class="tab-content active">
+        <div class="card">
+          <div class="input-group">
+            <label for="amount"><i class="fas fa-ruble-sign"></i> Сумма</label>
+            <input type="number" id="amount" placeholder="0" min="0" step="1">
+          </div>
+          
+          <div class="input-group">
+            <label for="category"><i class="fas fa-tags"></i> Категория</label>
+            <select id="category">
+              <option value="Продукты">🛒 Продукты</option>
+              <option value="Кафе">🍽️ Кафе</option>
+              <option value="Транспорт">🚌 Транспорт</option>
+              <option value="Развлечения">🎮 Развлечения</option>
+              <option value="Здоровье">💊 Здоровье</option>
+              <option value="Другое">⋯ Другое</option>
+            </select>
+          </div>
+          
+          <div class="input-group">
+            <label for="comment"><i class="fas fa-comment"></i> Комментарий</label>
+            <input type="text" id="comment" placeholder="Где потратили...">
+          </div>
+          
+          <div class="radio-group">
+            <label>
+              <input type="radio" name="author" value="Никита" checked>
+              <span class="radio-btn">
+                <i class="fas fa-male"></i>
+                <span>Никита</span>
+              </span>
+            </label>
+            <label>
+              <input type="radio" name="author" value="Лера">
+              <span class="radio-btn">
+                <i class="fas fa-female"></i>
+                <span>Лера</span>
+              </span>
+            </label>
+          </div>
+          
+          <button id="add-btn" class="primary-btn">
+            <i class="fas fa-save"></i> Сохранить
+          </button>
+          <div id="error-message" class="error-message"></div>
+        </div>
+      </div>
+
+      <div id="stats" class="tab-content">
+        <div class="card">
+          <h2><i class="fas fa-chart-bar"></i> По месяцам</h2>
+          <canvas id="monthlyChart"></canvas>
+        </div>
+        
+        <div class="card">
+          <h2><i class="fas fa-chart-pie"></i> По категориям</h2>
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

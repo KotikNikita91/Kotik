@@ -1,5 +1,5 @@
 const CONFIG = {
-  SHEET_URL: "https://script.google.com/macros/s/AKfycbxPPXS72nG6I2rC3Zt2qR0edupwRXAKmEByu9N7lII3OVn28WfjfZFGGzTd_KdIBEgj5A/exec",
+  SHEET_URL: "https://script.google.com/macros/s/AKfycbxF4DtXNNpib9q6jBKbIu3See4I_wSkuzUJLcxpD5QCtWZe6FmanIva1Xq_HDIc1rWG5Q/exec",
   CATEGORIES: ["Продукты", "Кафе", "Транспорт", "Развлечения", "Здоровье", "Другое"],
   COLORS: ['#b399d4', '#d4b3ff', '#c7a8e8', '#e0d0ff', '#a18bbc', '#9f86c7']
 };

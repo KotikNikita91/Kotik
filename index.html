@@ -75,23 +75,22 @@
     <script src="app.js"></script>
 
 
-    
-    <!-- Добавьте перед закрывающим </body> -->
-<section class="analytics">
+<!-- После формы добавьте этот блок -->
+<div class="analytics-container">
     <h2>Аналитика бюджета</h2>
     
-    <div class="charts-container">
-        <div class="chart-card">
+    <div class="charts-row">
+        <div class="chart-container">
             <h3>Расходы по категориям</h3>
-            <div class="chart" id="categoriesChart"></div>
+            <div class="chart" id="categoryChart"></div>
         </div>
         
-        <div class="chart-card">
-            <h3>Доходы/расходы по месяцам</h3>
+        <div class="chart-container">
+            <h3>Динамика по месяцам</h3>
             <div class="chart" id="monthlyChart"></div>
         </div>
     </div>
-</section>
+</div>
 
 <!-- Подключаем Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

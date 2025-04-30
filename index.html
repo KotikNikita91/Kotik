@@ -75,19 +75,23 @@
     <script src="app.js"></script>
 
 
-<!-- После формы добавьте этот блок -->
-<div class="analytics-container">
+<!-- После формы (внутри основного контейнера) -->
+<div class="analytics-section">
     <h2>Аналитика бюджета</h2>
     
-    <div class="charts-row">
-        <div class="chart-container">
+    <div class="charts-container">
+        <div class="chart-card">
             <h3>Расходы по категориям</h3>
-            <div class="chart" id="categoryChart"></div>
+            <div class="chart-wrapper">
+                <canvas id="categoryChart"></canvas>
+            </div>
         </div>
         
-        <div class="chart-container">
+        <div class="chart-card">
             <h3>Динамика по месяцам</h3>
-            <div class="chart" id="monthlyChart"></div>
+            <div class="chart-wrapper">
+                <canvas id="monthlyChart"></canvas>
+            </div>
         </div>
     </div>
 </div>

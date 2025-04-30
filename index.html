@@ -67,5 +67,30 @@
     </div>
 
     <script src="app.js"></script>
+
+
+    
+    <!-- Добавьте перед закрывающим </body> -->
+<section class="analytics">
+    <h2>Аналитика бюджета</h2>
+    
+    <div class="charts-container">
+        <div class="chart-card">
+            <h3>Расходы по категориям</h3>
+            <div class="chart" id="categoriesChart"></div>
+        </div>
+        
+        <div class="chart-card">
+            <h3>Доходы/расходы по месяцам</h3>
+            <div class="chart" id="monthlyChart"></div>
+        </div>
+    </div>
+</section>
+
+<!-- Подключаем Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="analytics.js"></script>
+
+    
 </body>
 </html>

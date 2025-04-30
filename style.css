@@ -1,7 +1,7 @@
 /* Добавьте это в самое начало файла для подключения шрифтов */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap');
 
-/* Основные переменные и шрифты */
+/* Базовые настройки */
 :root {
   --primary-color: #9bc4b2;
   --primary-dark: #7daf95;
@@ -15,7 +15,7 @@
   --border-radius: 12px;
 }
 
-/* Базовые стили */
+/* Общие стили */
 body {
   font-family: var(--font-main);
   background: var(--background);
@@ -26,27 +26,31 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   background-attachment: fixed;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start; /* Изменено с center на flex-start */
-  padding: 20px 0;
 }
 
-/* Основной контейнер */
-.container {
+/* Основная структура */
+.app-wrapper {
   width: 100%;
-  max-width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* Блок формы */
+.budget-form-container {
   background-color: rgba(255, 255, 255, 0.95);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
   padding: 30px;
-  box-sizing: border-box;
+  width: 100%;
+  max-width: 600px;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column; /* Главная ось вертикальная */
 }
 
-/* Заголовок */
 h1 {
   font-family: var(--font-alt);
   font-weight: 500;
@@ -54,12 +58,6 @@ h1 {
   text-align: center;
   margin-bottom: 30px;
   font-size: 28px;
-}
-
-/* Форма */
-.budget-form {
-  width: 100%;
-  margin-bottom: 40px; /* Увеличен отступ снизу */
 }
 
 .form-group {
@@ -113,120 +111,85 @@ button:hover {
   box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
 }
 
-/* Стили аналитики */
-
-.analytics-section {
-    width: 100%;
-    margin-top: 40px;
-    order: 2; /* Гарантированно будет под формой */
-}
-
+/* Блок аналитики */
 .analytics-container {
-    width: 100%;
-    margin-top: 40px;
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 30px;
+  box-sizing: border-box;
 }
 
-.charts-row {
-    display: block; /* Меняем на flex при ширине > 768px */
-    width: 100%;
+.analytics-container h2 {
+  font-family: var(--font-alt);
+  color: var(--primary-dark);
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 24px;
 }
 
-.chart-container {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    gap: 30px;
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+  width: 100%;
 }
 
-.chart {
-    width: 100%;
-    height: 300px;
-    position: relative;
+.chart-box {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-.chart-card {
-    width: 100%;
+.chart-box h3 {
+  font-family: var(--font-alt);
+  color: var(--primary-dark);
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
 }
 
 .chart-wrapper {
-    position: relative;
-    height: 300px;
-    width: 100%;
+  position: relative;
+  width: 100%;
+  height: 300px;
 }
 
-/* Сообщения об ошибках */
-.chart-error {
-  background: #ffeeee;
-  padding: 15px;
-  border-radius: var(--border-radius);
-  color: #d32f2f;
-  text-align: center;
-  margin-top: 20px;
+canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
-/* Адаптация под мобильные устройства */
-@media (max-width: 768px) {
-  .container {
-    padding: 20px;
-    margin: 0 10px;
-    width: calc(100% - 20px);
-  }
-  
-  h1 {
-    font-size: 24px;
-  }
-  
-  .analytics-section h2 {
-    font-size: 20px;
-  }
-  
-  input, select, button {
-    padding: 12px 14px;
-  }
-  
-  .chart {
-    height: 200px !important;
-  }
+/* Сообщения */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--text-color);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 1000;
 }
 
-
-/* Десктопная версия */
-@media (min-width: 768px) {
-    .charts-container {
-        flex-direction: row;
-    }
-    
-    .chart-card {
-        width: 50%;
-    }
+.toast.show {
+  opacity: 1;
+  bottom: 30px;
 }
 
-
-
-/* iPhone оптимизация */
-@supports (-webkit-touch-callout: none) {
-    .analytics-container {
-        padding: 15px;
-    }
-    
-    .chart {
-        height: 250px;
-    }
+.toast.success {
+  background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
 }
-  
-  input, select, button {
-    font-size: 16px;
-    min-height: 44px; /* Минимальный размер для удобного тапа */
-  }
-  
-  /* Фикс для формы в PWA */
-  .container {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
+
+.toast.error {
+  background: linear-gradient(to right, #e74c3c, #c0392b);
 }
 
 /* Анимации */
@@ -239,15 +202,61 @@ button:hover {
   animation: fadeIn 0.4s ease forwards;
 }
 
-/* Фикс для Canvas */
-canvas {
-    display: block;
-    width: 100% !important;
-    height: 100% !important;
-}
-
 .form-group:nth-child(1) { animation-delay: 0.1s; }
 .form-group:nth-child(2) { animation-delay: 0.2s; }
 .form-group:nth-child(3) { animation-delay: 0.3s; }
 .form-group:nth-child(4) { animation-delay: 0.4s; }
 .form-group:nth-child(5) { animation-delay: 0.5s; }
+
+/* Адаптация под мобильные устройства */
+@media (max-width: 768px) {
+  .app-wrapper {
+    padding: 15px;
+    gap: 30px;
+  }
+  
+  .budget-form-container, .analytics-container {
+    padding: 20px;
+  }
+  
+  h1 {
+    font-size: 24px;
+  }
+  
+  .analytics-container h2 {
+    font-size: 20px;
+  }
+  
+  input, select, button {
+    padding: 12px 14px;
+  }
+  
+  .chart-wrapper {
+    height: 250px;
+  }
+}
+
+/* Десктопная версия (2 колонки для графиков) */
+@media (min-width: 992px) {
+  .charts-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Специальные стили для iPhone */
+@supports (-webkit-touch-callout: none) {
+  body {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) 
+            env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  input, select, button {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  
+  .toast {
+    bottom: env(safe-area-inset-bottom);
+  }
+}

@@ -5,15 +5,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadAnalyticsData() {
     try {
-        // URL вашего Google Apps Script для получения данных
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxF4DtXNNpib9q6jBKbIu3See4I_wSkuzUJLcxpD5QCtWZe6FmanIva1Xq_HDIc1rWG5Q/exec';
+        const response = await fetch(scriptURL + '?action=getData');
+        if (!response.ok) throw new Error('Network error');
         
-        const response = await fetch(scriptURL);
         const data = await response.json();
+        if (data.error) throw new Error(data.error);
         
         renderCharts(data);
     } catch (error) {
-        console.error('Ошибка загрузки данных:', error);
+        console.error('Ошибка:', error);
+        document.getElementById('categoriesChart').innerHTML = `
+            <div class="chart-error">
+                Не удалось загрузить данные: ${error.message}
+            </div>
+        `;
     }
 }
 

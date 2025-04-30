@@ -35,7 +35,7 @@ body {
 /* Основной контейнер */
 .container {
   width: 100%;
-  max-width: 800px; /* Увеличена максимальная ширина */
+  max-width: 100%;
   background-color: rgba(255, 255, 255, 0.95);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
@@ -114,6 +114,13 @@ button:hover {
 }
 
 /* Стили аналитики */
+
+.analytics-section {
+    width: 100%;
+    margin-top: 40px;
+    order: 2; /* Гарантированно будет под формой */
+}
+
 .analytics-container {
     width: 100%;
     margin-top: 40px;
@@ -129,14 +136,26 @@ button:hover {
 }
 
 .chart-container {
+    display: flex;
+    flex-direction: column;
     width: 100%;
-    margin-bottom: 30px;
+    gap: 30px;
 }
 
 .chart {
     width: 100%;
     height: 300px;
     position: relative;
+}
+
+.chart-card {
+    width: 100%;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 300px;
+    width: 100%;
 }
 
 /* Сообщения об ошибках */
@@ -177,14 +196,12 @@ button:hover {
 
 /* Десктопная версия */
 @media (min-width: 768px) {
-    .charts-row {
-        display: flex;
-        gap: 30px;
+    .charts-container {
+        flex-direction: row;
     }
     
-    .chart-container {
+    .chart-card {
         width: 50%;
-        margin-bottom: 0;
     }
 }
 
@@ -220,6 +237,13 @@ button:hover {
 
 .form-group {
   animation: fadeIn 0.4s ease forwards;
+}
+
+/* Фикс для Canvas */
+canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
 }
 
 .form-group:nth-child(1) { animation-delay: 0.1s; }

@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadAnalyticsData() {
     try {
         // URL вашего Google Apps Script для получения данных
-        const scriptURL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?action=getData';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxF4DtXNNpib9q6jBKbIu3See4I_wSkuzUJLcxpD5QCtWZe6FmanIva1Xq_HDIc1rWG5Q/exec';
         
         const response = await fetch(scriptURL);
         const data = await response.json();

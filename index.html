@@ -2,7 +2,6 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <!-- Фикс для масштабирования -->
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,95 +10,95 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="cat-icon.png">
-    <link rel="apple-touch-startup-image" href="cat-icon.png">
     <meta name="apple-mobile-web-app-title" content="Бюджет">
-  
+    <!-- Подключение шрифтов -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>Бюджетный планировщик</h1>
-        <form id="budgetForm">
-            <div class="form-group">
-                <label for="date">Дата:</label>
-                <input type="date" id="date" name="date" required>
-            </div>
+    <div class="app-wrapper">
+        <!-- Основной блок с формой -->
+        <div class="budget-form-container">
+            <h1>Бюджетный планировщик</h1>
+            <form id="budgetForm">
+                <div class="form-group">
+                    <label for="date">Дата:</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Категория:</label>
+                    <select id="category" name="category" required>
+                        <option value="">Выберите категорию</option>
+                        <option value="🛒 Продукты">🛒 Продукты</option>
+                        <option value="🏥 Здоровье">🏥 Здоровье</option>
+                        <option value="🏠 Дом">🏠 Дом</option>
+                        <option value="🚗 Автомобиль">🚗 Автомобиль</option>
+                        <option value="🐱 Кот">🐱 Кот</option>
+                        <option value="📱 Связь">📱 Связь</option>
+                        <option value="👕 Одежда">👕 Одежда</option>
+                        <option value="🍽️ Кафе/Рестораны">🍽️ Кафе/Рестораны</option>
+                        <option value="🍱 Обед на работе">🍱 Обед на работе</option>
+                        <option value="🎮 Развлечения">🎮 Развлечения</option>
+                        <option value="💄 Косметика">💄 Косметика</option>
+                        <option value="💡 Коммуналка">💡 Коммуналка</option>
+                        <option value="❗ Непредвиденное">❗ Непредвиденное</option>
+                        <option value="💰 Доход">💰 Доход</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sum">Сумма:</label>
+                    <input type="number" id="sum" name="sum" placeholder="Введите сумму" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Описание:</label>
+                    <input type="text" id="description" name="description" placeholder="Краткое описание">
+                </div>
+                
+                <div class="form-group">
+                    <label for="type">Тип операции:</label>
+                    <select id="type" name="type" required>
+                        <option value="Расход">Расход</option>
+                        <option value="Доход">Доход</option>
+                    </select>
+                </div>
+                
+                <button type="submit" id="submitBtn">
+                    <span id="buttonText">Сохранить</span>
+                    <div id="spinner" class="spinner hidden"></div>
+                </button>
+            </form>
             
-            <div class="form-group">
-                <label for="category">Категория:</label>
-                <select id="category" name="category" required>
-                    <option value="">Выберите категорию</option>
-                    <option value="🛒 Продукты">🛒 Продукты</option>
-                    <option value="🏥 Здоровье">🏥 Здоровье</option>
-                    <option value="🏠 Дом">🏠 Дом</option>
-                    <option value="🚗 Автомобиль">🚗 Автомобиль</option>
-                    <option value="🐱 Кот">🐱 Кот</option>
-                    <option value="📱 Связь">📱 Связь</option>
-                    <option value="👕 Одежда">👕 Одежда</option>
-                    <option value="🍽️ Кафе/Рестораны">🍽️ Кафе/Рестораны</option>
-                    <option value="🍱 Обед на работе">🍱 Обед на работе</option>
-                    <option value="🎮 Развлечения">🎮 Развлечения</option>
-                    <option value="💄 Косметика">💄 Косметика</option>
-                    <option value="💡 Коммуналка">💡 Коммуналка</option>
-                    <option value="❗ Непредвиденное">❗ Непредвиденное</option>
-                     <option value="💰 Доход">💰 Доход</option>
-                </select>
-            </div>
+            <div id="toast" class="toast hidden"></div>
+        </div>
+
+        <!-- Блок аналитики -->
+        <div class="analytics-container">
+            <h2>Аналитика бюджета</h2>
             
-            <div class="form-group">
-                <label for="sum">Сумма:</label>
-                <input type="number" id="sum" name="sum" placeholder="Введите сумму" required>
+            <div class="charts-grid">
+                <div class="chart-box">
+                    <h3>Расходы по категориям</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-box">
+                    <h3>Динамика по месяцам</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label for="description">Описание:</label>
-                <input type="text" id="description" name="description" placeholder="Краткое описание">
-            </div>
-            
-            <div class="form-group">
-                <label for="type">Тип операции:</label>
-                <select id="type" name="type" required>
-                    <option value="Расход">Расход</option>
-                    <option value="Доход">Доход</option>
-                </select>
-            </div>
-            
-            <button type="submit" id="submitBtn">
-                <span id="buttonText">Сохранить</span>
-                <div id="spinner" class="spinner hidden"></div>
-            </button>
-        </form>
-        
-        <div id="toast" class="toast hidden"></div>
+        </div>
     </div>
 
     <script src="app.js"></script>
-
-
-<!-- После формы (внутри основного контейнера) -->
-<div class="analytics-section">
-    <h2>Аналитика бюджета</h2>
-    
-    <div class="charts-container">
-        <div class="chart-card">
-            <h3>Расходы по категориям</h3>
-            <div class="chart-wrapper">
-                <canvas id="categoryChart"></canvas>
-            </div>
-        </div>
-        
-        <div class="chart-card">
-            <h3>Динамика по месяцам</h3>
-            <div class="chart-wrapper">
-                <canvas id="monthlyChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Подключаем Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="analytics.js"></script>
-
-    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="analytics.js"></script>
 </body>
 </html>

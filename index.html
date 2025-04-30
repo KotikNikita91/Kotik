@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Бюджетный планировщик</title>
@@ -11,15 +11,14 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="cat-icon.png">
     <meta name="apple-mobile-web-app-title" content="Бюджет">
-    <!-- Подключение шрифтов -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="app-wrapper">
-        <!-- Основной блок с формой -->
-        <div class="budget-form-container">
+    <div class="app-container">
+        <!-- Основная форма -->
+        <div class="form-wrapper">
             <h1>Бюджетный планировщик</h1>
             <form id="budgetForm">
                 <div class="form-group">
@@ -76,10 +75,10 @@
         </div>
 
         <!-- Блок аналитики -->
-        <div class="analytics-container">
+        <div class="analytics-wrapper">
             <h2>Аналитика бюджета</h2>
             
-            <div class="charts-grid">
+            <div class="charts-container">
                 <div class="chart-box">
                     <h3>Расходы по категориям</h3>
                     <div class="chart-wrapper">

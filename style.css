@@ -44,6 +44,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.3);
   margin: 20px;
   letter-spacing: 0.02em;
+  margin-bottom: 30px;
 }
 
 h1 {
@@ -231,7 +232,8 @@ input:not(:placeholder-shown) {
 
 /* Стили для аналитики */
 .analytics {
-    margin-top: 50px;
+    margin-top: 0;
+    margin-bottom: 50px;
     padding: 30px;
     background-color: rgba(255, 255, 255, 0.9);
     border-radius: 16px;
@@ -270,7 +272,30 @@ input:not(:placeholder-shown) {
 }
 
 @media (max-width: 768px) {
+    .analytics {
+        padding: 20px 15px;
+    }
+}
+
+
+/* iPhone оптимизация */
+@supports (-webkit-touch-callout: none) {
+    body {
+        -webkit-text-size-adjust: 100%;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) 
+                env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    
+    input, select, button {
+        font-size: 16px; /* Предотвращает автоувеличение */
+    }
+    
     .charts-container {
         grid-template-columns: 1fr;
     }
+}
+
+/* Специальные стили для PWA */
+.ios-standalone .container {
+    padding-top: 20px;
 }

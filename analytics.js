@@ -1,34 +1,44 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Убедитесь, что URL совпадает с вашим развернутым скриптом
+    // Убедитесь, что используете правильный URL скрипта
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxF4DtXNNpib9q6jBKbIu3See4I_wSkuzUJLcxpD5QCtWZe6FmanIva1Xq_HDIc1rWG5Q/exec';
-    loadAnalyticsData(scriptURL);
+    
+    // Инициализация графиков с загрузкой данных
+    initCharts(scriptURL);
 });
 
-async function loadAnalyticsData(scriptURL) {
+async function initCharts(scriptURL) {
     try {
-        const response = await fetch(scriptURL + '?action=getData');
+        // Показать состояние загрузки
+        document.querySelectorAll('canvas').forEach(canvas => {
+            canvas.style.background = '#f9f9f9';
+        });
+        
+        // Загрузка данных
+        const response = await fetch(`${scriptURL}?action=getData`);
         if (!response.ok) throw new Error('Ошибка сети');
         
-        const data = await response.json();
-        if (data.status === 'error') throw new Error(data.message);
+        const result = await response.json();
+        if (result.status !== 'success') throw new Error(result.message || 'Ошибка данных');
         
-        renderCharts(data.data);
+        // Рендеринг графиков
+        renderCharts(result.data);
     } catch (error) {
         console.error('Ошибка:', error);
-        showChartError(error.message);
+        showError(error.message);
     }
 }
 
 function renderCharts(data) {
     // Код рендеринга графиков без изменений
+    // Убедитесь, что используете Chart.js v3+
 }
 
-function showChartError(message) {
-    const container = document.querySelector('.analytics');
-    container.innerHTML = `
-        <div class="error-message">
-            <p>Не удалось загрузить аналитику</p>
-            <small>${message}</small>
-        </div>
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'chart-error';
+    errorDiv.innerHTML = `
+        <p>Не удалось загрузить аналитику</p>
+        <small>${message}</small>
     `;
+    document.querySelector('.analytics-section').appendChild(errorDiv);
 }

@@ -113,49 +113,30 @@ button:hover {
   box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
 }
 
-/* Секция аналитики */
-.analytics-section {
-  width: 100%;
-  margin-top: 20px;
+/* Стили аналитики */
+.analytics-container {
+    width: 100%;
+    margin-top: 40px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.analytics-section h2 {
-  font-family: var(--font-alt);
-  color: var(--primary-dark);
-  text-align: center;
-  margin-bottom: 25px;
-  font-size: 24px;
+.charts-row {
+    display: block; /* Меняем на flex при ширине > 768px */
+    width: 100%;
 }
 
 .chart-container {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-  width: 100%;
+    width: 100%;
+    margin-bottom: 30px;
 }
 
-.chart-wrapper {
-  background: white;
-  border-radius: var(--border-radius);
-  padding: 20px;
-  box-shadow: var(--shadow);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.chart-wrapper h3 {
-  font-family: var(--font-alt);
-  color: var(--primary-dark);
-  text-align: center;
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 18px;
-}
-
-/* Графики */
 .chart {
-  width: 100% !important;
-  height: 250px !important;
+    width: 100%;
+    height: 300px;
+    position: relative;
 }
 
 /* Сообщения об ошибках */
@@ -193,13 +174,32 @@ button:hover {
   }
 }
 
-/* Специальные стили для iPhone */
+
+/* Десктопная версия */
+@media (min-width: 768px) {
+    .charts-row {
+        display: flex;
+        gap: 30px;
+    }
+    
+    .chart-container {
+        width: 50%;
+        margin-bottom: 0;
+    }
+}
+
+
+
+/* iPhone оптимизация */
 @supports (-webkit-touch-callout: none) {
-  body {
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) 
-            env(safe-area-inset-bottom) env(safe-area-inset-left);
-    -webkit-text-size-adjust: 100%;
-  }
+    .analytics-container {
+        padding: 15px;
+    }
+    
+    .chart {
+        height: 250px;
+    }
+}
   
   input, select, button {
     font-size: 16px;

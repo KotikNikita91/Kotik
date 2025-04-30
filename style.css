@@ -1,7 +1,7 @@
 /* Добавьте это в самое начало файла для подключения шрифтов */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap');
 
-/* Базовые настройки */
+/* ===== БАЗОВЫЕ СТИЛИ ===== */
 :root {
   --primary-color: #9bc4b2;
   --primary-dark: #7daf95;
@@ -13,42 +13,59 @@
   --font-alt: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   --border-radius: 12px;
+  --form-width: 94vw;
+  --max-form-width: 500px;
+  --input-padding: 14px;
 }
 
-/* Общие стили */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+  height: 100%;
+}
+
 body {
   font-family: var(--font-main);
   background: var(--background);
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
   color: var(--text-color);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   background-attachment: fixed;
+  min-height: 100%;
+  width: 100vw;
+  overflow-x: hidden;
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
 }
 
-/* Основная структура */
-.app-wrapper {
+/* ===== ОСНОВНОЙ КОНТЕЙНЕР ===== */
+.app-container {
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 40px;
+  padding: 0 15px;
 }
 
-/* Блок формы */
-.budget-form-container {
-  background-color: rgba(255, 255, 255, 0.95);
+/* ===== ФОРМА ===== */
+.form-wrapper {
+  width: 100%;
+  max-width: var(--max-form-width);
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
-  padding: 30px;
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
+  padding: 25px;
+  position: relative;
 }
 
 h1 {
@@ -56,12 +73,12 @@ h1 {
   font-weight: 500;
   color: var(--primary-dark);
   text-align: center;
-  margin-bottom: 30px;
-  font-size: 28px;
+  margin-bottom: 25px;
+  font-size: 26px;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 label {
@@ -75,13 +92,22 @@ label {
 
 input, select {
   width: 100%;
-  padding: 14px 16px;
+  padding: var(--input-padding);
   border: 2px solid #e0e0e0;
   border-radius: var(--border-radius);
   font-family: var(--font-main);
   font-size: 16px;
-  background-color: rgba(255, 255, 255, 0.9);
-  transition: all 0.3s ease;
+  background-color: white;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233d4a42'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
 }
 
 input:focus, select:focus {
@@ -101,9 +127,9 @@ button {
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
   margin-top: 10px;
   box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 button:hover {
@@ -111,29 +137,27 @@ button:hover {
   box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
 }
 
-/* Блок аналитики */
-.analytics-container {
+/* ===== АНАЛИТИКА ===== */
+.analytics-wrapper {
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
-  padding: 30px;
-  box-sizing: border-box;
+  padding: 25px;
 }
 
-.analytics-container h2 {
+.analytics-wrapper h2 {
   font-family: var(--font-alt);
   color: var(--primary-dark);
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
   font-size: 24px;
 }
 
-.charts-grid {
+.charts-container {
   display: grid;
   grid-template-columns: 1fr;
   gap: 30px;
-  width: 100%;
 }
 
 .chart-box {
@@ -147,7 +171,6 @@ button:hover {
   font-family: var(--font-alt);
   color: var(--primary-dark);
   text-align: center;
-  margin-top: 0;
   margin-bottom: 15px;
   font-size: 18px;
 }
@@ -155,15 +178,16 @@ button:hover {
 .chart-wrapper {
   position: relative;
   width: 100%;
-  height: 300px;
+  height: 280px;
 }
 
 canvas {
   width: 100% !important;
   height: 100% !important;
+  display: block;
 }
 
-/* Сообщения */
+/* ===== УВЕДОМЛЕНИЯ ===== */
 .toast {
   position: fixed;
   bottom: 20px;
@@ -177,6 +201,8 @@ canvas {
   opacity: 0;
   transition: all 0.3s ease;
   z-index: 1000;
+  max-width: 90%;
+  text-align: center;
 }
 
 .toast.show {
@@ -192,7 +218,54 @@ canvas {
   background: linear-gradient(to right, #e74c3c, #c0392b);
 }
 
-/* Анимации */
+/* ===== АДАПТИВНОСТЬ ===== */
+@media (min-width: 768px) {
+  .charts-container {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .form-wrapper {
+    padding: 30px;
+  }
+  
+  .analytics-wrapper {
+    padding: 30px;
+  }
+}
+
+/* ===== iOS ФИКСЫ ===== */
+@supports (-webkit-touch-callout: none) {
+  body {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) 
+            env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  
+  input, select, button {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  
+  .form-wrapper {
+    width: calc(100vw - 30px);
+  }
+  
+  .toast {
+    bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+  
+  input[type="date"]::before {
+    content: attr(placeholder);
+    color: #999;
+    margin-right: 0.5em;
+  }
+  
+  input[type="date"]:focus::before,
+  input[type="date"]:valid::before {
+    content: "";
+  }
+}
+
+/* ===== АНИМАЦИИ ===== */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -207,56 +280,3 @@ canvas {
 .form-group:nth-child(3) { animation-delay: 0.3s; }
 .form-group:nth-child(4) { animation-delay: 0.4s; }
 .form-group:nth-child(5) { animation-delay: 0.5s; }
-
-/* Адаптация под мобильные устройства */
-@media (max-width: 768px) {
-  .app-wrapper {
-    padding: 15px;
-    gap: 30px;
-  }
-  
-  .budget-form-container, .analytics-container {
-    padding: 20px;
-  }
-  
-  h1 {
-    font-size: 24px;
-  }
-  
-  .analytics-container h2 {
-    font-size: 20px;
-  }
-  
-  input, select, button {
-    padding: 12px 14px;
-  }
-  
-  .chart-wrapper {
-    height: 250px;
-  }
-}
-
-/* Десктопная версия (2 колонки для графиков) */
-@media (min-width: 992px) {
-  .charts-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* Специальные стили для iPhone */
-@supports (-webkit-touch-callout: none) {
-  body {
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) 
-            env(safe-area-inset-bottom) env(safe-area-inset-left);
-    -webkit-text-size-adjust: 100%;
-  }
-  
-  input, select, button {
-    font-size: 16px;
-    min-height: 44px;
-  }
-  
-  .toast {
-    bottom: env(safe-area-inset-bottom);
-  }
-}

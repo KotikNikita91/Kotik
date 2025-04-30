@@ -135,3 +135,8 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Добавьте в app.js для iPhone
+if (navigator.standalone) {
+    document.body.classList.add('ios-standalone');
+}

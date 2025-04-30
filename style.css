@@ -1,191 +1,218 @@
 /* Добавьте это в самое начало файла для подключения шрифтов */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap');
 
+/* Основные переменные и шрифты */
 :root {
-  /* Обновленные пастельные цвета */
   --primary-color: #9bc4b2;
   --primary-dark: #7daf95;
   --primary-light: #c0dacc;
   --text-color: #3d4a42;
   --light-text: #f5f9f7;
   --background: linear-gradient(135deg, #6a8f7e 0%, #b8d5c5 100%);
-  
-  /* Новые шрифты */
   --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-alt: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --border-radius: 12px;
 }
 
+/* Базовые стили */
 body {
   font-family: var(--font-main);
   background: var(--background);
   margin: 0;
   padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
   color: var(--text-color);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  font-weight: 400;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  background-attachment: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Изменено с center на flex-start */
+  padding: 20px 0;
 }
 
+/* Основной контейнер */
 .container {
-  background-color: rgba(255, 255, 255, 0.92);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  padding: 30px;
   width: 100%;
-  max-width: 500px;
+  max-width: 800px; /* Увеличена максимальная ширина */
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 30px;
   box-sizing: border-box;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  margin: 20px;
-  letter-spacing: 0.02em;
-  margin-bottom: 30px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column; /* Главная ось вертикальная */
 }
 
+/* Заголовок */
 h1 {
   font-family: var(--font-alt);
   font-weight: 500;
-  letter-spacing: -0.5px;
-  text-align: center;
   color: var(--primary-dark);
+  text-align: center;
   margin-bottom: 30px;
-  font-weight: 700;
   font-size: 28px;
-  line-height: 1.3;
-  margin-bottom: 1.5rem;
+}
+
+/* Форма */
+.budget-form {
+  width: 100%;
+  margin-bottom: 40px; /* Увеличен отступ снизу */
 }
 
 .form-group {
-  margin-bottom: 24px;
-  position: relative;
-  margin-bottom: 1.6rem;
-  transition: all 0.3s ease;
+  margin-bottom: 20px;
 }
 
 label {
+  display: block;
   font-family: var(--font-alt);
   font-weight: 500;
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
   color: var(--text-color);
+  margin-bottom: 8px;
   font-size: 15px;
-  font-size: 0.95rem;
-  margin-bottom: 0.7rem;
-  display: inline-block;
 }
 
 input, select {
-  font-family: var(--font-main);
-  background-color: rgba(255, 255, 255, 0.8);
-  border-color: #d1e7dd;
   width: 100%;
-  padding: 0.85rem 1.2rem;
+  padding: 14px 16px;
   border: 2px solid #e0e0e0;
-  border-radius: 12px;
+  border-radius: var(--border-radius);
+  font-family: var(--font-main);
   font-size: 16px;
-  box-sizing: border-box;
-  transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1);
   background-color: rgba(255, 255, 255, 0.9);
-  font-size: 0.95rem;
-  line-height: 1.5;
+  transition: all 0.3s ease;
 }
 
 input:focus, select:focus {
-  border-color: var(--primary-color);
+  border-color: var(--primary-dark);
   outline: none;
   box-shadow: 0 0 0 3px rgba(125, 175, 149, 0.2);
-  transform: translateY(-1px);
 }
 
 button {
   width: 100%;
-  padding: 1rem;
-  background: var(--primary-color);
+  padding: 16px;
   background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
-  color: #2d4538;
+  color: white;
   border: none;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  border-radius: var(--border-radius);
+  font-family: var(--font-alt);
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1);
-  box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+  transition: all 0.3s ease;
   margin-top: 10px;
-  letter-spacing: 0.03em;
+  box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
 }
 
 button:hover {
-  background: linear-gradient(to right, var(--primary-dark), #5a8f7b);
-  color: white;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
 }
 
-button:active {
-  transform: translateY(0);
+/* Секция аналитики */
+.analytics-section {
+  width: 100%;
+  margin-top: 20px;
 }
 
-.spinner {
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top: 3px solid white;
-  width: 20px;
-  height: 20px;
-  animation: spin 1s linear infinite;
-}
-
-.spinner.hidden {
-  display: none;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.toast {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: var(--text-color);
-  color: white;
-  padding: 14px 28px;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  opacity: 0;
-  transition: all 0.3s ease;
-  z-index: 1000;
-  font-weight: 500;
-  max-width: 80%;
+.analytics-section h2 {
+  font-family: var(--font-alt);
+  color: var(--primary-dark);
   text-align: center;
+  margin-bottom: 25px;
+  font-size: 24px;
 }
 
-.toast.show {
-  opacity: 1;
-  bottom: 40px;
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  width: 100%;
 }
 
-.toast.success {
-  background: linear-gradient(to right, #88c9a1, #6abf8b);
-  color: #2d4538;
+.chart-wrapper {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.toast.error {
-  background: linear-gradient(to right, #e74c3c, #c0392b);
+.chart-wrapper h3 {
+  font-family: var(--font-alt);
+  color: var(--primary-dark);
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
 }
 
-/* Анимация для элементов формы */
+/* Графики */
+.chart {
+  width: 100% !important;
+  height: 250px !important;
+}
+
+/* Сообщения об ошибках */
+.chart-error {
+  background: #ffeeee;
+  padding: 15px;
+  border-radius: var(--border-radius);
+  color: #d32f2f;
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* Адаптация под мобильные устройства */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px;
+    margin: 0 10px;
+    width: calc(100% - 20px);
+  }
+  
+  h1 {
+    font-size: 24px;
+  }
+  
+  .analytics-section h2 {
+    font-size: 20px;
+  }
+  
+  input, select, button {
+    padding: 12px 14px;
+  }
+  
+  .chart {
+    height: 200px !important;
+  }
+}
+
+/* Специальные стили для iPhone */
+@supports (-webkit-touch-callout: none) {
+  body {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) 
+            env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  input, select, button {
+    font-size: 16px;
+    min-height: 44px; /* Минимальный размер для удобного тапа */
+  }
+  
+  /* Фикс для формы в PWA */
+  .container {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Анимации */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -200,90 +227,3 @@ button:active {
 .form-group:nth-child(3) { animation-delay: 0.3s; }
 .form-group:nth-child(4) { animation-delay: 0.4s; }
 .form-group:nth-child(5) { animation-delay: 0.5s; }
-
-@media (max-width: 600px) {
-  .container {
-    padding: 24px;
-    margin: 16px;
-    border-radius: 12px;
-  }
-  
-  h1 {
-    font-size: 24px;
-  }
-  
-  input, select, button {
-    padding: 12px 14px;
-  }
-}
-
-/* Улучшенные плейсхолдеры */
-input::placeholder {
-  color: #a0b0a8;
-  font-weight: 300;
-  opacity: 1;
-}
-
-/* Микроанимации при взаимодействии */
-input:not(:placeholder-shown) {
-  background-color: rgba(255, 255, 255, 0.95);
-}
-
-
-/* Аналитика - мобильная вёрстка */
-.analytics {
-    margin: 20px 0;
-    padding: 15px;
-    width: 100%;
-    box-sizing: border-box;
-
-
-.charts-container {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-}
-
-.chart-card {
-    width: 100%;
-    margin-bottom: 20px;
-}
-
-.chart {
-    height: 250px;
-    width: 100% !important;
-}
-
-@media (max-width: 768px) {
-    .analytics {
-        padding: 20px 15px;
-    }
-}
-
-
-/* iPhone-specific стили */
-@supports (-webkit-touch-callout: none) {
-    .container, .analytics {
-        width: 94vw;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
-    input, select {
-        font-size: 16px; /* Фикс увеличения в iOS */
-    }
-}
-
-/* Сообщение об ошибке */
-.error-message {
-    background: #ffeeee;
-    padding: 15px;
-    border-radius: 10px;
-    color: #d32f2f;
-    text-align: center;
-}
-
-/* Специальные стили для PWA */
-.ios-standalone .container {
-    padding-top: 20px;
-}

@@ -1,12 +1,36 @@
 // Инициализация прозрачности для плавного появления
 document.body.style.opacity = '0';
 
+// Фиксация ширины для мобильных устройств
+function fixMobileLayout() {
+  const formWrapper = document.querySelector('.form-wrapper');
+  const viewportWidth = window.innerWidth;
+  
+  if (viewportWidth < 500) {
+    formWrapper.style.width = 'calc(100vw - 30px)';
+  } else {
+    formWrapper.style.width = '';
+  }
+}
+
+// Запрет масштабирования на iOS
+function preventZoom() {
+  document.addEventListener('gesturestart', function(e) {
+    e.preventDefault();
+  });
+}
+
+// Инициализация
 document.addEventListener('DOMContentLoaded', function() {
-    // Плавное появление всей страницы
-    setTimeout(() => {
-        document.body.style.transition = 'opacity 0.5s ease';
-        document.body.style.opacity = '1';
-    }, 100);
+  fixMobileLayout();
+  preventZoom();
+  window.addEventListener('resize', fixMobileLayout);
+  
+  // Установка текущей даты
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('date').value = today;
+});
+
     
     const form = document.getElementById('budgetForm');
     const submitBtn = document.getElementById('submitBtn');

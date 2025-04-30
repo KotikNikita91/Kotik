@@ -227,3 +227,50 @@ input::placeholder {
 input:not(:placeholder-shown) {
   background-color: rgba(255, 255, 255, 0.95);
 }
+
+
+/* Стили для аналитики */
+.analytics {
+    margin-top: 50px;
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.analytics h2 {
+    text-align: center;
+    color: #5a8f7b;
+    margin-bottom: 30px;
+}
+
+.charts-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.chart-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.chart-card h3 {
+    color: #6a8f7e;
+    margin-top: 0;
+    text-align: center;
+}
+
+.chart {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
+}

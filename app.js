@@ -17,7 +17,7 @@ const state = {
     category: null,
     monthly: null
   },
-  currentData: null,
+  allData: null, // Все данные для фильтрации
   dashboardExpanded: false
 };
 
@@ -48,33 +48,67 @@ function formatCurrency(amount) {
   }).format(amount);
 }
 
-function getAnalyticsURL() {
-  const url = new URL(CONFIG.scriptURL);
-  url.searchParams.append('action', 'getAnalytics');
-  url.searchParams.append('period', DOM.periodFilter.value);
-  url.searchParams.append('type', DOM.typeFilter.value);
-  console.log('URL для запроса:', url.toString()); // ОТЛАДКА
-  return url.toString();
+function getDateRange(period) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  switch(period) {
+    case 'current_month':
+      return {
+        start: new Date(today.getFullYear(), today.getMonth(), 1),
+        end: today
+      };
+    case 'last_month':
+      return {
+        start: new Date(today.getFullYear(), today.getMonth() - 1, 1),
+        end: new Date(today.getFullYear(), today.getMonth(), 0)
+      };
+    case 'last_3':
+      return {
+        start: new Date(today.getFullYear(), today.getMonth() - 2, 1),
+        end: today
+      };
+    case 'last_6':
+      return {
+        start: new Date(today.getFullYear(), today.getMonth() - 5, 1),
+        end: today
+      };
+    case 'year':
+      return {
+        start: new Date(today.getFullYear(), 0, 1),
+        end: today
+      };
+    default:
+      return {
+        start: new Date(today.getFullYear(), today.getMonth(), 1),
+        end: today
+      };
+  }
+}
+
+function parseMonthLabel(label) {
+  // Преобразуем "04.2025" в Date
+  const [month, year] = label.split('.').map(Number);
+  return new Date(year, month - 1, 1);
 }
 
 // ================== ДАШБОРД ================== //
 
-function updateDashboard(data) {
-  console.log('Обновление дашборда, данные:', data);
+function toggleDashboard() {
+  state.dashboardExpanded = !state.dashboardExpanded;
+  const header = document.querySelector('.dashboard-header');
+  const content = DOM.dashboardContent;
   
-  // Вычисляем сводку из данных monthly, если нет summary
-  let income = 0, expenses = 0;
-  
-  if (data.summary) {
-    income = data.summary.income;
-    expenses = data.summary.expenses;
-  } else if (data.data && data.data.monthly) {
-    // Считаем из monthly
-    const monthly = data.data.monthly;
-    income = monthly.income.reduce((a, b) => a + b, 0);
-    expenses = monthly.expenses.reduce((a, b) => a + b, 0);
+  if (state.dashboardExpanded) {
+    header.classList.add('expanded');
+    content.classList.add('expanded');
+  } else {
+    header.classList.remove('expanded');
+    content.classList.remove('expanded');
   }
-  
+}
+
+function updateDashboard(income, expenses) {
   const balance = income - expenses;
   
   const incomeEl = document.getElementById('totalIncome');
@@ -90,41 +124,99 @@ function updateDashboard(data) {
     if (balance < 0) balanceCard.classList.add('negative');
     else balanceCard.classList.remove('negative');
   }
+}
+
+// ================== ФИЛЬТРАЦИЯ ДАННЫХ ================== //
+
+function filterDataByPeriod(data, period) {
+  const range = getDateRange(period);
+  const filteredMonthly = {
+    labels: [],
+    income: [],
+    expenses: []
+  };
   
-  console.log('Дашборд обновлен:', {income, expenses, balance});
+  let totalIncome = 0;
+  let totalExpenses = 0;
+  
+  data.monthly.labels.forEach((label, index) => {
+    const monthDate = parseMonthLabel(label);
+    const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+    const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+    
+    // Проверяем, пересекается ли месяц с выбранным периодом
+    if (monthStart <= range.end && monthEnd >= range.start) {
+      filteredMonthly.labels.push(label);
+      filteredMonthly.income.push(data.monthly.income[index]);
+      filteredMonthly.expenses.push(data.monthly.expenses[index]);
+      
+      totalIncome += data.monthly.income[index];
+      totalExpenses += data.monthly.expenses[index];
+    }
+  });
+  
+  return {
+    monthly: filteredMonthly,
+    categories: data.categories, // Категории не фильтруем по периоду (сложно без дат)
+    summary: {
+      income: totalIncome,
+      expenses: totalExpenses,
+      balance: totalIncome - totalExpenses
+    }
+  };
+}
+
+function filterDataByType(data, type) {
+  if (type === 'all') return data;
+  
+  // Для типа фильтруем только категории (расходы)
+  const filteredCategories = {
+    labels: [],
+    values: []
+  };
+  
+  if (type === 'expense') {
+    // Оставляем только расходы (все категории кроме Дохода)
+    data.categories.labels.forEach((label, index) => {
+      if (label !== '💰 Доход') {
+        filteredCategories.labels.push(label);
+        filteredCategories.values.push(data.categories.values[index]);
+      }
+    });
+  } else if (type === 'income') {
+    // Только доходы
+    data.categories.labels.forEach((label, index) => {
+      if (label === '💰 Доход') {
+        filteredCategories.labels.push(label);
+        filteredCategories.values.push(data.categories.values[index]);
+      }
+    });
+  }
+  
+  return {
+    ...data,
+    categories: filteredCategories
+  };
 }
 
 // ================== ГРАФИКИ ================== //
 
 function renderCharts(data) {
   try {
-    console.log('Рендеринг графиков, данные:', data); // ОТЛАДКА
-    
     // Уничтожаем старые графики
     if (state.charts.category) state.charts.category.destroy();
     if (state.charts.monthly) state.charts.monthly.destroy();
 
-    // Данные в data.data
-    const chartData = data.data;
-    
-    if (!chartData) {
-      console.error('Нет chartData:', data);
-      return;
-    }
-
-    console.log('Категории:', chartData.categories); // ОТЛАДКА
-    console.log('Месяцы:', chartData.monthly); // ОТЛАДКА
-
     // 1. Круговой график категорий
     const categoryCanvas = document.getElementById('categoryChart');
-    if (categoryCanvas && chartData.categories && chartData.categories.labels.length > 0) {
+    if (categoryCanvas && data.categories.labels.length > 0) {
       const categoryCtx = categoryCanvas.getContext('2d');
       state.charts.category = new Chart(categoryCtx, {
         type: 'doughnut',
         data: {
-          labels: chartData.categories.labels,
+          labels: data.categories.labels,
           datasets: [{
-            data: chartData.categories.values,
+            data: data.categories.values,
             backgroundColor: CONFIG.colors.categories,
             borderWidth: 2,
             borderColor: '#fff'
@@ -155,16 +247,10 @@ function renderCharts(data) {
           }
         }
       });
-    } else {
-      console.log('Нет данных для графика категорий'); // ОТЛАДКА
     }
 
     // 2. График динамики по месяцам
-    if (chartData.monthly && chartData.monthly.labels.length > 0) {
-      updateMonthlyChart(chartData.monthly);
-    } else {
-      console.log('Нет данных для графика по месяцам'); // ОТЛАДКА
-    }
+    updateMonthlyChart(data.monthly);
 
   } catch (error) {
     console.error('Ошибка отрисовки графиков:', error);
@@ -173,7 +259,15 @@ function renderCharts(data) {
 }
 
 function updateMonthlyChart(monthlyData) {
-  if (!monthlyData) return;
+  if (!monthlyData || monthlyData.labels.length === 0) {
+    // Очищаем canvas если нет данных
+    const canvas = document.getElementById('monthlyChart');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    return;
+  }
   
   const showIncome = DOM.showIncome.checked;
   const showExpenses = DOM.showExpenses.checked;
@@ -270,99 +364,78 @@ function updateMonthlyChart(monthlyData) {
 
 // ================== ПОСЛЕДНИЕ ОПЕРАЦИИ ================== //
 
-function renderRecentTransactions(transactions) {
-  console.log('Рендеринг транзакций:', transactions);
-  
+function renderRecentTransactions() {
   const container = document.getElementById('transactionsList');
-  if (!container) {
-    console.error('Не найден контейнер transactionsList');
-    return;
-  }
+  if (!container) return;
   
-  // Если транзакций нет в ответе, показываем заглушку
-  if (!transactions || transactions.length === 0) {
-    container.innerHTML = '<div class="loading-text">Нет операций за выбранный период</div>';
-    return;
-  }
-  
-  const html = transactions.map((t, index) => {
-    console.log(`Транзакция ${index}:`, t);
-    
-    const isIncome = t.type === 'Доход';
-    const amountClass = isIncome ? 'income' : 'expense';
-    const icon = isIncome ? '💰' : getCategoryIcon(t.category);
-    
-    return `
-      <div class="transaction-item">
-        <div class="transaction-icon">${icon}</div>
-        <div class="transaction-info">
-          <div class="transaction-category">${t.category || 'Без категории'}</div>
-          ${t.description ? `<div class="transaction-description">${t.description}</div>` : ''}
-          <div class="transaction-date">${t.date || '-'}</div>
-        </div>
-        <div class="transaction-amount ${amountClass}">
-          ${isIncome ? '+' : '-'}${formatCurrency(t.amount || 0)}
-        </div>
-      </div>
-    `;
-  }).join('');
-  
-  container.innerHTML = html;
-  console.log('Транзакции отрендерены');
-}
-
-function getCategoryIcon(category) {
-  if (!category) return '💸';
-  const icons = {
-    '🛒 Продукты': '🛒',
-    '🏥 Здоровье': '🏥',
-    '🏠 Дом': '🏠',
-    '🚗 Автомобиль': '🚗',
-    '🐱 Кот': '🐱',
-    '📱 Связь': '📱',
-    '👕 Одежда': '👕',
-    '🍽️ Кафе/Рестораны': '🍽️',
-    '🍱 Обед на работе': '🍱',
-    '🎮 Развлечения': '🎮',
-    '💄 Косметика': '💄',
-    '💡 Коммуналка': '💡',
-    '🏡 Ипотека': '🏡',
-    '🛏 Аренда': '🛏',
-    '🚕 Такси/Общ. транспорт': '🚕',
-    '✈️ Авиа / ЖД билеты': '✈️',
-    '🌎 Отпуск': '🌎',
-    '❗ Непредвиденное': '❗',
-    '🥊🏈⚽️ Спорт': '⚽',
-    '💰 Доход': '💰'
-  };
-  return icons[category] || '💸';
+  // Временно показываем заглушку, т.к. бэкенд не возвращает транзакции
+  container.innerHTML = '<div class="loading-text">Функция в разработке</div>';
 }
 
 // ================== ЗАГРУЗКА ДАННЫХ ================== //
 
+async function fetchAnalyticsData() {
+  try {
+    // Всегда загружаем все данные (бэкенд не фильтрует)
+    const url = `${CONFIG.scriptURL}?action=getAnalytics`;
+    
+    console.log('Загрузка данных с URL:', url);
+    
+    const response = await fetch(url);
+    console.log('Ответ получен, статус:', response.status);
+    
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    
+    const data = await response.json();
+    console.log('Данные получены:', data);
+    
+    // Сохраняем все данные для фильтрации
+    if (data.status === 'success' && data.data) {
+      state.allData = data.data;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Ошибка загрузки аналитики:', error);
+    throw error;
+  }
+}
+
 async function updateAnalytics() {
   try {
     console.log('=== НАЧАЛО ОБНОВЛЕНИЯ АНАЛИТИКИ ===');
-    const data = await fetchAnalyticsData();
     
-    // ВСЕГДА обновляем дашборд (вычисляем из данных)
-    console.log('Обновляем дашборд');
-    updateDashboard(data);
-    
-    // Графики в data.data
-    if (data.data && data.data.categories && data.data.monthly) {
-      console.log('Найдены данные для графиков');
-      renderCharts(data);
-    } else {
-      console.warn('Нет данных для графиков:', data.data);
+    // Загружаем данные только если ещё не загружены
+    if (!state.allData) {
+      await fetchAnalyticsData();
     }
     
-    // Транзакции - пока заглушка, т.к. бэкенд их не возвращает
-    console.log('Транзакции временно недоступны (нет в ответе бэкенда)');
-    const container = document.getElementById('transactionsList');
-    if (container) {
-      container.innerHTML = '<div class="loading-text">Функция в разработке</div>';
+    if (!state.allData) {
+      throw new Error('Не удалось загрузить данные');
     }
+    
+    // Применяем фильтры на фронтенде
+    const period = DOM.periodFilter.value;
+    const type = DOM.typeFilter.value;
+    
+    console.log('Применяем фильтры:', { period, type });
+    
+    // Фильтруем по периоду
+    let filteredData = filterDataByPeriod(state.allData, period);
+    
+    // Фильтруем по типу
+    filteredData = filterDataByType(filteredData, type);
+    
+    console.log('Отфильтрованные данные:', filteredData);
+    
+    // Обновляем дашборд
+    updateDashboard(filteredData.summary.income, filteredData.summary.expenses);
+    
+    // Обновляем графики
+    renderCharts(filteredData);
+    
+    // Обновляем транзакции (заглушка)
+    renderRecentTransactions();
     
     console.log('=== КОНЕЦ ОБНОВЛЕНИЯ АНАЛИТИКИ ===');
     
@@ -386,14 +459,12 @@ async function handleFormSubmit(event) {
   try {
     const formData = new FormData(DOM.form);
     
-    // Логируем данные формы
     console.log('Отправка формы:', {
       date: formData.get('date'),
       category: formData.get('category'),
       sum: formData.get('sum'),
-      description: formData.get('description'),
       type: formData.get('type')
-    }); // ОТЛАДКА
+    });
     
     const response = await fetch(CONFIG.scriptURL, {
       method: 'POST',
@@ -403,13 +474,16 @@ async function handleFormSubmit(event) {
     if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
     
     const result = await response.json();
-    console.log('Ответ от сервера:', result); // ОТЛАДКА
+    console.log('Ответ от сервера:', result);
     
     showToast('Данные успешно сохранены! ✅');
     DOM.form.reset();
     
-    // Обновляем дату и аналитику
+    // Обновляем дату
     DOM.dateInput.value = new Date().toISOString().split('T')[0];
+    
+    // Сбрасываем кэш данных и перезагружаем
+    state.allData = null;
     setTimeout(updateAnalytics, 1000);
 
   } catch (error) {
@@ -435,42 +509,39 @@ function setupEventListeners() {
   // Форма
   DOM.form.addEventListener('submit', handleFormSubmit);
   
-  // Фильтры - важно: используем change и проверяем, что элементы существуют
+  // Фильтры
   if (DOM.periodFilter) {
-    DOM.periodFilter.addEventListener('change', () => {
-      console.log('Изменен период на:', DOM.periodFilter.value); // ОТЛАДКА
-      updateAnalytics();
-    });
+    DOM.periodFilter.addEventListener('change', updateAnalytics);
   }
   
   if (DOM.typeFilter) {
-    DOM.typeFilter.addEventListener('change', () => {
-      console.log('Изменен тип на:', DOM.typeFilter.value); // ОТЛАДКА
-      updateAnalytics();
-    });
+    DOM.typeFilter.addEventListener('change', updateAnalytics);
   }
   
   // Тогглы графика
   if (DOM.showIncome) {
     DOM.showIncome.addEventListener('change', () => {
-      if (state.currentData && state.currentData.data) {
-        updateMonthlyChart(state.currentData.data.monthly);
+      if (state.allData) {
+        const filtered = filterDataByPeriod(state.allData, DOM.periodFilter.value);
+        updateMonthlyChart(filtered.monthly);
       }
     });
   }
   
   if (DOM.showExpenses) {
     DOM.showExpenses.addEventListener('change', () => {
-      if (state.currentData && state.currentData.data) {
-        updateMonthlyChart(state.currentData.data.monthly);
+      if (state.allData) {
+        const filtered = filterDataByPeriod(state.allData, DOM.periodFilter.value);
+        updateMonthlyChart(filtered.monthly);
       }
     });
   }
   
   if (DOM.showBalance) {
     DOM.showBalance.addEventListener('change', () => {
-      if (state.currentData && state.currentData.data) {
-        updateMonthlyChart(state.currentData.data.monthly);
+      if (state.allData) {
+        const filtered = filterDataByPeriod(state.allData, DOM.periodFilter.value);
+        updateMonthlyChart(filtered.monthly);
       }
     });
   }
@@ -492,17 +563,13 @@ function handleMobileLayout() {
 // ================== ИНИЦИАЛИЗАЦИЯ ================== //
 
 function initApp() {
-  console.log('=== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ ==='); // ОТЛАДКА
+  console.log('=== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ ===');
   
-  // Проверяем наличие DOM элементов
   console.log('DOM элементы:', {
     form: !!DOM.form,
     periodFilter: !!DOM.periodFilter,
-    typeFilter: !!DOM.typeFilter,
-    showIncome: !!DOM.showIncome,
-    showExpenses: !!DOM.showExpenses,
-    showBalance: !!DOM.showBalance
-  }); // ОТЛАДКА
+    typeFilter: !!DOM.typeFilter
+  });
   
   // Установка текущей даты
   if (DOM.dateInput) {
@@ -521,7 +588,7 @@ function initApp() {
   // Дашборд свёрнут по умолчанию
   state.dashboardExpanded = false;
   
-  console.log('=== ИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА ==='); // ОТЛАДКА
+  console.log('=== ИНИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА ===');
 }
 
 // Запуск приложения

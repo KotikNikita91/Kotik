@@ -80,13 +80,63 @@
             <div id="toast" class="toast hidden"></div>
         </div>
 
+        <!-- Дашборд (после формы) -->
+        <div class="dashboard-wrapper" id="dashboardWrapper">
+            <div class="dashboard-header" onclick="toggleDashboard()">
+                <h2>📊 Сводка бюджета</h2>
+                <i class="fas fa-chevron-down" id="dashboardArrow"></i>
+            </div>
+            <div class="dashboard-content" id="dashboardContent">
+                <div class="stats-grid">
+                    <div class="stat-card income">
+                        <i class="fas fa-arrow-up"></i>
+                        <div class="stat-value" id="totalIncome">--</div>
+                        <div class="stat-label">Доходы</div>
+                    </div>
+                    <div class="stat-card expense">
+                        <i class="fas fa-arrow-down"></i>
+                        <div class="stat-value" id="totalExpense">--</div>
+                        <div class="stat-label">Расходы</div>
+                    </div>
+                    <div class="stat-card balance" id="balanceCard">
+                        <i class="fas fa-wallet"></i>
+                        <div class="stat-value" id="totalBalance">--</div>
+                        <div class="stat-label">Баланс</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Блок аналитики -->
         <div class="analytics-wrapper">
             <h2>Аналитика бюджета</h2>
             
+            <!-- Фильтры -->
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label>Период:</label>
+                    <select id="periodFilter">
+                        <option value="current_month">Текущий месяц</option>
+                        <option value="last_month">Прошлый месяц</option>
+                        <option value="last_3">Последние 3 месяца</option>
+                        <option value="last_6">Последние 6 месяцев</option>
+                        <option value="year">Этот год</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Тип:</label>
+                    <select id="typeFilter">
+                        <option value="all">Все операции</option>
+                        <option value="expense">Только расходы</option>
+                        <option value="income">Только доходы</option>
+                    </select>
+                </div>
+            </div>
+            
             <div class="charts-container">
                 <div class="chart-box">
-                    <h3>Расходы по категориям</h3>
+                    <h3>Распределение по категориям</h3>
                     <div class="chart-wrapper">
                         <canvas id="categoryChart"></canvas>
                     </div>
@@ -94,16 +144,37 @@
                 
                 <div class="chart-box">
                     <h3>Динамика по месяцам</h3>
+                    <div class="chart-controls">
+                        <label class="toggle">
+                            <input type="checkbox" id="showIncome" checked>
+                            <span>Доходы</span>
+                        </label>
+                        <label class="toggle">
+                            <input type="checkbox" id="showExpenses" checked>
+                            <span>Расходы</span>
+                        </label>
+                        <label class="toggle">
+                            <input type="checkbox" id="showBalance">
+                            <span>Баланс</span>
+                        </label>
+                    </div>
                     <div class="chart-wrapper">
                         <canvas id="monthlyChart"></canvas>
                     </div>
                 </div>
             </div>
+
+            <!-- Последние операции -->
+            <div class="recent-transactions">
+                <h3>Последние операции</h3>
+                <div id="transactionsList" class="transactions-list">
+                    <div class="loading-text">Загрузка...</div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script src="app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="analytics.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

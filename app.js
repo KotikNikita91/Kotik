@@ -97,14 +97,17 @@ function renderCharts(data) {
     if (state.charts.category) state.charts.category.destroy();
     if (state.charts.monthly) state.charts.monthly.destroy();
 
+    // Данные теперь в data.data!
+    const chartData = data.data;
+
     // 1. Круговой график категорий
     const categoryCtx = document.getElementById('categoryChart').getContext('2d');
     state.charts.category = new Chart(categoryCtx, {
       type: 'doughnut',
       data: {
-        labels: data.categories.labels,
+        labels: chartData.categories.labels,
         datasets: [{
-          data: data.categories.values,
+          data: chartData.categories.values,
           backgroundColor: CONFIG.colors.categories,
           borderWidth: 2,
           borderColor: '#fff'
@@ -137,7 +140,7 @@ function renderCharts(data) {
     });
 
     // 2. График динамики по месяцам
-    updateMonthlyChart(data.monthly);
+    updateMonthlyChart(chartData.monthly);
 
   } catch (error) {
     console.error('Ошибка отрисовки графиков:', error);
@@ -146,6 +149,8 @@ function renderCharts(data) {
 }
 
 function updateMonthlyChart(monthlyData) {
+  if (!monthlyData) return;
+  
   const showIncome = DOM.showIncome.checked;
   const showExpenses = DOM.showExpenses.checked;
   const showBalance = DOM.showBalance.checked;
@@ -246,7 +251,7 @@ function renderRecentTransactions(transactions) {
     return;
   }
   
-  const html = transactions.slice(0, 10).map(t => {
+  const html = transactions.map(t => {
     const isIncome = t.type === 'Доход';
     const amountClass = isIncome ? 'income' : 'expense';
     const icon = isIncome ? '💰' : getCategoryIcon(t.category);
@@ -318,14 +323,17 @@ async function updateAnalytics() {
   try {
     const data = await fetchAnalyticsData();
     
+    // Сводка в data.summary
     if (data.summary) {
       updateDashboard(data);
     }
     
-    if (data.categories && data.monthly) {
+    // Графики в data.data
+    if (data.data && data.data.categories && data.data.monthly) {
       renderCharts(data);
     }
     
+    // Транзакции в data.transactions
     if (data.transactions) {
       renderRecentTransactions(data.transactions);
     }
@@ -392,13 +400,19 @@ function setupEventListeners() {
   
   // Тогглы графика
   DOM.showIncome.addEventListener('change', () => {
-    if (state.currentData) updateMonthlyChart(state.currentData.monthly);
+    if (state.currentData && state.currentData.data) {
+      updateMonthlyChart(state.currentData.data.monthly);
+    }
   });
   DOM.showExpenses.addEventListener('change', () => {
-    if (state.currentData) updateMonthlyChart(state.currentData.monthly);
+    if (state.currentData && state.currentData.data) {
+      updateMonthlyChart(state.currentData.data.monthly);
+    }
   });
   DOM.showBalance.addEventListener('change', () => {
-    if (state.currentData) updateMonthlyChart(state.currentData.monthly);
+    if (state.currentData && state.currentData.data) {
+      updateMonthlyChart(state.currentData.data.monthly);
+    }
   });
   
   // Мобильная оптимизация

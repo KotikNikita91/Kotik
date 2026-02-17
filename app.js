@@ -59,29 +59,23 @@ function getAnalyticsURL() {
 
 // ================== ДАШБОРД ================== //
 
-function toggleDashboard() {
-  state.dashboardExpanded = !state.dashboardExpanded;
-  const header = document.querySelector('.dashboard-header');
-  const content = DOM.dashboardContent;
-  
-  if (state.dashboardExpanded) {
-    header.classList.add('expanded');
-    content.classList.add('expanded');
-  } else {
-    header.classList.remove('expanded');
-    content.classList.remove('expanded');
-  }
-}
-
 function updateDashboard(data) {
-  console.log('Обновление дашборда, данные:', data); // ОТЛАДКА
+  console.log('Обновление дашборда, данные:', data);
   
-  if (!data || !data.summary) {
-    console.error('Нет данных summary:', data);
-    return;
+  // Вычисляем сводку из данных monthly, если нет summary
+  let income = 0, expenses = 0;
+  
+  if (data.summary) {
+    income = data.summary.income;
+    expenses = data.summary.expenses;
+  } else if (data.data && data.data.monthly) {
+    // Считаем из monthly
+    const monthly = data.data.monthly;
+    income = monthly.income.reduce((a, b) => a + b, 0);
+    expenses = monthly.expenses.reduce((a, b) => a + b, 0);
   }
   
-  const { income, expenses, balance } = data.summary;
+  const balance = income - expenses;
   
   const incomeEl = document.getElementById('totalIncome');
   const expenseEl = document.getElementById('totalExpense');
@@ -93,14 +87,11 @@ function updateDashboard(data) {
   if (balanceEl) balanceEl.textContent = formatCurrency(balance);
   
   if (balanceCard) {
-    if (balance < 0) {
-      balanceCard.classList.add('negative');
-    } else {
-      balanceCard.classList.remove('negative');
-    }
+    if (balance < 0) balanceCard.classList.add('negative');
+    else balanceCard.classList.remove('negative');
   }
   
-  console.log('Дашборд обновлен:', {income, expenses, balance}); // ОТЛАДКА
+  console.log('Дашборд обновлен:', {income, expenses, balance});
 }
 
 // ================== ГРАФИКИ ================== //
@@ -280,7 +271,7 @@ function updateMonthlyChart(monthlyData) {
 // ================== ПОСЛЕДНИЕ ОПЕРАЦИИ ================== //
 
 function renderRecentTransactions(transactions) {
-  console.log('Рендеринг транзакций:', transactions); // ОТЛАДКА
+  console.log('Рендеринг транзакций:', transactions);
   
   const container = document.getElementById('transactionsList');
   if (!container) {
@@ -288,13 +279,14 @@ function renderRecentTransactions(transactions) {
     return;
   }
   
+  // Если транзакций нет в ответе, показываем заглушку
   if (!transactions || transactions.length === 0) {
     container.innerHTML = '<div class="loading-text">Нет операций за выбранный период</div>';
     return;
   }
   
   const html = transactions.map((t, index) => {
-    console.log(`Транзакция ${index}:`, t); // ОТЛАДКА
+    console.log(`Транзакция ${index}:`, t);
     
     const isIncome = t.type === 'Доход';
     const amountClass = isIncome ? 'income' : 'expense';
@@ -316,7 +308,7 @@ function renderRecentTransactions(transactions) {
   }).join('');
   
   container.innerHTML = html;
-  console.log('Транзакции отрендерены'); // ОТЛАДКА
+  console.log('Транзакции отрендерены');
 }
 
 function getCategoryIcon(category) {
@@ -348,58 +340,31 @@ function getCategoryIcon(category) {
 
 // ================== ЗАГРУЗКА ДАННЫХ ================== //
 
-async function fetchAnalyticsData() {
-  try {
-    const url = getAnalyticsURL();
-    console.log('Загрузка данных с URL:', url); // ОТЛАДКА
-    
-    const response = await fetch(url);
-    console.log('Ответ получен, статус:', response.status); // ОТЛАДКА
-    
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    
-    const data = await response.json();
-    console.log('Данные получены:', data); // ОТЛАДКА
-    
-    state.currentData = data;
-    
-    return data;
-  } catch (error) {
-    console.error('Ошибка загрузки аналитики:', error);
-    throw error;
-  }
-}
-
 async function updateAnalytics() {
   try {
-    console.log('=== НАЧАЛО ОБНОВЛЕНИЯ АНАЛИТИКИ ==='); // ОТЛАДКА
+    console.log('=== НАЧАЛО ОБНОВЛЕНИЯ АНАЛИТИКИ ===');
     const data = await fetchAnalyticsData();
     
-    // Сводка в data.summary
-    if (data.summary) {
-      console.log('Найдена сводка:', data.summary); // ОТЛАДКА
-      updateDashboard(data);
-    } else {
-      console.warn('Нет сводки в ответе'); // ОТЛАДКА
-    }
+    // ВСЕГДА обновляем дашборд (вычисляем из данных)
+    console.log('Обновляем дашборд');
+    updateDashboard(data);
     
     // Графики в data.data
     if (data.data && data.data.categories && data.data.monthly) {
-      console.log('Найдены данные для графиков'); // ОТЛАДКА
+      console.log('Найдены данные для графиков');
       renderCharts(data);
     } else {
-      console.warn('Нет данных для графиков:', data.data); // ОТЛАДКА
+      console.warn('Нет данных для графиков:', data.data);
     }
     
-    // Транзакции в data.transactions
-    if (data.transactions) {
-      console.log('Найдены транзакции:', data.transactions.length); // ОТЛАДКА
-      renderRecentTransactions(data.transactions);
-    } else {
-      console.warn('Нет транзакций в ответе'); // ОТЛАДКА
+    // Транзакции - пока заглушка, т.к. бэкенд их не возвращает
+    console.log('Транзакции временно недоступны (нет в ответе бэкенда)');
+    const container = document.getElementById('transactionsList');
+    if (container) {
+      container.innerHTML = '<div class="loading-text">Функция в разработке</div>';
     }
     
-    console.log('=== КОНЕЦ ОБНОВЛЕНИЯ АНАЛИТИКИ ==='); // ОТЛАДКА
+    console.log('=== КОНЕЦ ОБНОВЛЕНИЯ АНАЛИТИКИ ===');
     
   } catch (error) {
     console.error('Ошибка в updateAnalytics:', error);

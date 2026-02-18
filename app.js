@@ -3,7 +3,7 @@ const CONFIG = {
   scriptURL: 'https://script.google.com/macros/s/AKfycbxF4DtXNNpib9q6jBKbIu3See4I_wSkuzUJLcxpD5QCtWZe6FmanIva1Xq_HDIc1rWG5Q/exec',
   maxMobileWidth: 500,
   colors: {
-    categories: ['#9bc4b2', '#7daf95', '#6a8f7e', '#b8d5c5', '#88c9a1', '#a8d7b9', '#e1a692', '#d4a5a5', '#f4a261', '#2a9d8f', '#264653', '#2a9d8f', '#e9c46a', '#f4a261', '#e76f51'],
+    categories: ['#9bc4b2', '#7daf95', '#6a8f7e', '#b8d5c5', '#88c9a1', '#a8d7b9', '#e1a692', '#d4a5a5', '#f4a261', '#2a9d8f', '#264653', '#e9c46a', '#e76f51'],
     income: '#7daf95',
     expenses: '#e1a692',
     balance: '#9bc4b2'
@@ -18,7 +18,9 @@ const state = {
     monthly: null
   },
   allData: null,
-  dashboardExpanded: false
+  transactions: [],
+  dashboardExpanded: false,
+  transactionsExpanded: true // По умолчанию развёрнут
 };
 
 // Инициализация DOM элементов
@@ -35,7 +37,7 @@ const DOM = {
   showExpenses: document.getElementById('showExpenses'),
   showBalance: document.getElementById('showBalance'),
   dashboardContent: document.getElementById('dashboardContent'),
-  dashboardArrow: document.getElementById('dashboardArrow')
+  transactionsContent: document.getElementById('transactionsContent')
 };
 
 // ================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ================== //
@@ -56,39 +58,32 @@ function getDateRange(period) {
     case 'current_month':
       return {
         start: new Date(today.getFullYear(), today.getMonth(), 1),
-        end: today,
-        label: `${String(today.getMonth() + 1).padStart(2, '0')}.${today.getFullYear()}`
+        end: today
       };
     case 'last_month':
-      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
       return {
-        start: lastMonth,
-        end: new Date(today.getFullYear(), today.getMonth(), 0),
-        label: `${String(lastMonth.getMonth() + 1).padStart(2, '0')}.${lastMonth.getFullYear()}`
+        start: new Date(today.getFullYear(), today.getMonth() - 1, 1),
+        end: new Date(today.getFullYear(), today.getMonth(), 0)
       };
     case 'last_3':
       return {
         start: new Date(today.getFullYear(), today.getMonth() - 2, 1),
-        end: today,
-        label: 'last_3'
+        end: today
       };
     case 'last_6':
       return {
         start: new Date(today.getFullYear(), today.getMonth() - 5, 1),
-        end: today,
-        label: 'last_6'
+        end: today
       };
     case 'year':
       return {
         start: new Date(today.getFullYear(), 0, 1),
-        end: today,
-        label: 'year'
+        end: today
       };
     default:
       return {
         start: new Date(today.getFullYear(), today.getMonth(), 1),
-        end: today,
-        label: 'current'
+        end: today
       };
   }
 }
@@ -117,92 +112,158 @@ function toggleDashboard() {
 function updateDashboard(income, expenses) {
   const balance = income - expenses;
   
-  const incomeEl = document.getElementById('totalIncome');
-  const expenseEl = document.getElementById('totalExpense');
-  const balanceEl = document.getElementById('totalBalance');
+  document.getElementById('totalIncome').textContent = formatCurrency(income);
+  document.getElementById('totalExpense').textContent = formatCurrency(expenses);
+  document.getElementById('totalBalance').textContent = formatCurrency(balance);
+  
   const balanceCard = document.getElementById('balanceCard');
+  if (balance < 0) balanceCard.classList.add('negative');
+  else balanceCard.classList.remove('negative');
+}
+
+// ================== ОПЕРАЦИИ ================== //
+
+function toggleTransactions() {
+  state.transactionsExpanded = !state.transactionsExpanded;
+  const header = document.querySelector('.transactions-header');
+  const content = DOM.transactionsContent;
   
-  if (incomeEl) incomeEl.textContent = formatCurrency(income);
-  if (expenseEl) expenseEl.textContent = formatCurrency(expenses);
-  if (balanceEl) balanceEl.textContent = formatCurrency(balance);
-  
-  if (balanceCard) {
-    if (balance < 0) balanceCard.classList.add('negative');
-    else balanceCard.classList.remove('negative');
+  if (state.transactionsExpanded) {
+    header.classList.add('expanded');
+    content.classList.add('expanded');
+  } else {
+    header.classList.remove('expanded');
+    content.classList.remove('expanded');
   }
+}
+
+function renderTransactions(transactions) {
+  const container = document.getElementById('transactionsList');
+  if (!container) return;
+  
+  if (!transactions || transactions.length === 0) {
+    container.innerHTML = '<div class="loading-text">Нет операций за выбранный период</div>';
+    return;
+  }
+  
+  const html = transactions.map(t => {
+    const isIncome = t.type === 'Доход';
+    const amountClass = isIncome ? 'income' : 'expense';
+    const icon = isIncome ? '💰' : getCategoryIcon(t.category);
+    
+    return `
+      <div class="transaction-item">
+        <div class="transaction-icon">${icon}</div>
+        <div class="transaction-info">
+          <div class="transaction-category">${t.category}</div>
+          ${t.description ? `<div class="transaction-description">${t.description}</div>` : ''}
+          <div class="transaction-date">${t.date}</div>
+        </div>
+        <div class="transaction-amount ${amountClass}">
+          ${isIncome ? '+' : '-'}${formatCurrency(t.amount)}
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  container.innerHTML = html;
+}
+
+function getCategoryIcon(category) {
+  const icons = {
+    '🛒 Продукты': '🛒',
+    '🏥 Здоровье': '🏥',
+    '🏠 Дом': '🏠',
+    '🚗 Автомобиль': '🚗',
+    '🐱 Кот': '🐱',
+    '📱 Связь': '📱',
+    '👕 Одежда': '👕',
+    '🍽️ Кафе/Рестораны': '🍽️',
+    '🍱 Обед на работе': '🍱',
+    '🎮 Развлечения': '🎮',
+    '💄 Косметика': '💄',
+    '💡 Коммуналка': '💡',
+    '🏡 Ипотека': '🏡',
+    '🛏 Аренда': '🛏',
+    '🚕 Такси/Общ. транспорт': '🚕',
+    '✈️ Авиа / ЖД билеты': '✈️',
+    '🌎 Отпуск': '🌎',
+    '❗ Непредвиденное': '❗',
+    '🥊🏈⚽️ Спорт': '⚽',
+    '💰 Доход': '💰'
+  };
+  return icons[category] || '💸';
 }
 
 // ================== ФИЛЬТРАЦИЯ ДАННЫХ ================== //
 
-function filterDataByPeriod(data, period) {
+function filterDataByPeriod(data, transactions, period) {
   const range = getDateRange(period);
   
-  // Фильтруем месяцы
+  // Фильтруем месяцы для графика
   const filteredMonthly = {
     labels: [],
     income: [],
     expenses: []
   };
   
-  let totalIncome = 0;
-  let totalExpenses = 0;
-  
   data.monthly.labels.forEach((label, index) => {
     const monthDate = parseMonthLabel(label);
     const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
     const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
     
-    // Проверяем, пересекается ли месяц с выбранным периодом
     if (monthStart <= range.end && monthEnd >= range.start) {
       filteredMonthly.labels.push(label);
       filteredMonthly.income.push(data.monthly.income[index]);
       filteredMonthly.expenses.push(data.monthly.expenses[index]);
-      
-      totalIncome += data.monthly.income[index];
-      totalExpenses += data.monthly.expenses[index];
     }
   });
   
-  // Для категорий: если выбран конкретный месяц, пропорционально распределяем
-  // Если диапазон — берём все категории (т.к. нет детальных данных)
-  let filteredCategories = data.categories;
+  // Пересчитываем категории из транзакций за период
+  const categories = {};
+  let totalIncome = 0;
+  let totalExpenses = 0;
   
-  if (period === 'current_month' || period === 'last_month') {
-    // Для одного месяца пытаемся оценить пропорции
-    const totalExpensesAllTime = data.categories.values.reduce((a, b) => a + b, 0);
-    const totalExpensesPeriod = totalExpenses;
-    
-    if (totalExpensesAllTime > 0 && totalExpensesPeriod > 0) {
-      const ratio = totalExpensesPeriod / totalExpensesAllTime;
-      filteredCategories = {
-        labels: data.categories.labels,
-        values: data.categories.values.map(v => Math.round(v * ratio))
-      };
+  const filteredTransactions = transactions.filter(t => {
+    const [day, month, year] = t.date.split('.').map(Number);
+    const tDate = new Date(year, month - 1, day);
+    return tDate >= range.start && tDate <= range.end;
+  });
+  
+  filteredTransactions.forEach(t => {
+    if (t.type === 'Расход' && t.category) {
+      categories[t.category] = (categories[t.category] || 0) + t.amount;
     }
-  }
+    
+    if (t.type === 'Доход') totalIncome += t.amount;
+    else totalExpenses += t.amount;
+  });
   
   return {
     monthly: filteredMonthly,
-    categories: filteredCategories,
+    categories: {
+      labels: Object.keys(categories),
+      values: Object.values(categories)
+    },
     summary: {
       income: totalIncome,
       expenses: totalExpenses,
       balance: totalIncome - totalExpenses
-    }
+    },
+    transactions: filteredTransactions.slice(0, 20) // Последние 20
   };
 }
 
 function filterDataByType(data, type) {
   if (type === 'all') return data;
   
-  // Фильтруем категории по типу
+  // Фильтруем категории
   const filteredCategories = {
     labels: [],
     values: []
   };
   
   if (type === 'expense') {
-    // Все категории кроме Дохода
     data.categories.labels.forEach((label, index) => {
       if (label !== '💰 Доход') {
         filteredCategories.labels.push(label);
@@ -210,7 +271,6 @@ function filterDataByType(data, type) {
       }
     });
   } else if (type === 'income') {
-    // Только Доход
     data.categories.labels.forEach((label, index) => {
       if (label === '💰 Доход') {
         filteredCategories.labels.push(label);
@@ -219,26 +279,34 @@ function filterDataByType(data, type) {
     });
   }
   
-  // Для monthly: если выбран только доход или только расход
+  // Фильтруем месяцы
   let filteredMonthly = data.monthly;
   if (type === 'income') {
     filteredMonthly = {
       labels: data.monthly.labels,
       income: data.monthly.income,
-      expenses: data.monthly.expenses.map(() => 0) // Обнуляем расходы
+      expenses: data.monthly.expenses.map(() => 0)
     };
   } else if (type === 'expense') {
     filteredMonthly = {
       labels: data.monthly.labels,
-      income: data.monthly.income.map(() => 0), // Обнуляем доходы
+      income: data.monthly.income.map(() => 0),
       expenses: data.monthly.expenses
     };
   }
   
+  // Фильтруем транзакции
+  const filteredTransactions = data.transactions.filter(t => {
+    if (type === 'income') return t.type === 'Доход';
+    if (type === 'expense') return t.type === 'Расход';
+    return true;
+  });
+  
   return {
     ...data,
     categories: filteredCategories,
-    monthly: filteredMonthly
+    monthly: filteredMonthly,
+    transactions: filteredTransactions
   };
 }
 
@@ -246,34 +314,31 @@ function filterDataByType(data, type) {
 
 function renderCharts(data) {
   try {
-    // Уничтожаем старые графики
     if (state.charts.category) state.charts.category.destroy();
     if (state.charts.monthly) state.charts.monthly.destroy();
 
-    // 1. Круговой график категорий
+    // Круговой график
     const categoryCanvas = document.getElementById('categoryChart');
     if (categoryCanvas && data.categories.labels.length > 0) {
-      // Фильтруем категории с нулевыми значениями
-      const nonZeroCategories = {
+      const nonZero = {
         labels: [],
         values: []
       };
       
-      data.categories.labels.forEach((label, index) => {
-        if (data.categories.values[index] > 0) {
-          nonZeroCategories.labels.push(label);
-          nonZeroCategories.values.push(data.categories.values[index]);
+      data.categories.labels.forEach((label, i) => {
+        if (data.categories.values[i] > 0) {
+          nonZero.labels.push(label);
+          nonZero.values.push(data.categories.values[i]);
         }
       });
       
-      if (nonZeroCategories.labels.length > 0) {
-        const categoryCtx = categoryCanvas.getContext('2d');
-        state.charts.category = new Chart(categoryCtx, {
+      if (nonZero.labels.length > 0) {
+        state.charts.category = new Chart(categoryCanvas.getContext('2d'), {
           type: 'doughnut',
           data: {
-            labels: nonZeroCategories.labels,
+            labels: nonZero.labels,
             datasets: [{
-              data: nonZeroCategories.values,
+              data: nonZero.values,
               backgroundColor: CONFIG.colors.categories,
               borderWidth: 2,
               borderColor: '#fff'
@@ -285,110 +350,73 @@ function renderCharts(data) {
             plugins: {
               legend: {
                 position: 'bottom',
-                labels: {
-                  padding: 15,
-                  font: { size: 11 },
-                  boxWidth: 12
-                }
+                labels: { padding: 15, font: { size: 11 }, boxWidth: 12 }
               },
               tooltip: {
                 callbacks: {
                   label: function(context) {
-                    const label = context.label || '';
                     const value = formatCurrency(context.parsed);
                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                     const percentage = ((context.parsed / total) * 100).toFixed(1);
-                    return `${label}: ${value} (${percentage}%)`;
+                    return `${context.label}: ${value} (${percentage}%)`;
                   }
                 }
               }
             }
           }
         });
-      } else {
-        // Нет данных для отображения
-        const ctx = categoryCanvas.getContext('2d');
-        ctx.clearRect(0, 0, categoryCanvas.width, categoryCanvas.height);
-        ctx.font = '14px Arial';
-        ctx.fillStyle = '#999';
-        ctx.textAlign = 'center';
-        ctx.fillText('Нет данных за выбранный период', categoryCanvas.width / 2, categoryCanvas.height / 2);
       }
     }
 
-    // 2. График динамики по месяцам
+    // Столбчатый график
     updateMonthlyChart(data.monthly);
 
   } catch (error) {
     console.error('Ошибка отрисовки графиков:', error);
-    showToast('Ошибка обновления графиков', 'error');
   }
 }
 
 function updateMonthlyChart(monthlyData) {
-  if (!monthlyData || monthlyData.labels.length === 0) {
-    const canvas = document.getElementById('monthlyChart');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-    return;
-  }
-  
-  const showIncome = DOM.showIncome.checked;
-  const showExpenses = DOM.showExpenses.checked;
-  const showBalance = DOM.showBalance.checked;
+  if (!monthlyData || monthlyData.labels.length === 0) return;
   
   const datasets = [];
   
-  if (showIncome) {
+  if (DOM.showIncome.checked) {
     datasets.push({
       label: 'Доходы',
       data: monthlyData.income,
       backgroundColor: CONFIG.colors.income,
-      borderColor: CONFIG.colors.income,
-      borderWidth: 2,
-      borderRadius: 4,
-      tension: 0.4
+      borderRadius: 4
     });
   }
   
-  if (showExpenses) {
+  if (DOM.showExpenses.checked) {
     datasets.push({
       label: 'Расходы',
       data: monthlyData.expenses,
       backgroundColor: CONFIG.colors.expenses,
-      borderColor: CONFIG.colors.expenses,
-      borderWidth: 2,
-      borderRadius: 4,
-      tension: 0.4
+      borderRadius: 4
     });
   }
   
-  if (showBalance) {
+  if (DOM.showBalance.checked) {
     const balanceData = monthlyData.income.map((inc, i) => inc - monthlyData.expenses[i]);
     datasets.push({
       label: 'Баланс',
       data: balanceData,
-      backgroundColor: CONFIG.colors.balance,
-      borderColor: CONFIG.colors.balance,
-      borderWidth: 2,
       type: 'line',
-      tension: 0.4,
+      borderColor: CONFIG.colors.balance,
+      backgroundColor: CONFIG.colors.balance,
+      borderWidth: 2,
       pointRadius: 4
     });
   }
 
-  const monthlyCanvas = document.getElementById('monthlyChart');
-  if (!monthlyCanvas) return;
+  const ctx = document.getElementById('monthlyChart').getContext('2d');
   
-  const monthlyCtx = monthlyCanvas.getContext('2d');
+  if (state.charts.monthly) state.charts.monthly.destroy();
   
-  if (state.charts.monthly) {
-    state.charts.monthly.destroy();
-  }
-  
-  state.charts.monthly = new Chart(monthlyCtx, {
+  state.charts.monthly = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: monthlyData.labels,
@@ -397,119 +425,78 @@ function updateMonthlyChart(monthlyData) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: {
-        mode: 'index',
-        intersect: false
-      },
       plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { padding: 15, font: { size: 12 } }
-        },
+        legend: { position: 'bottom', labels: { padding: 15, font: { size: 12 } } },
         tooltip: {
           callbacks: {
-            label: function(context) {
-              return `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`;
-            }
+            label: (ctx) => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}`
           }
         }
       },
       scales: {
         y: {
           beginAtZero: true,
-          ticks: {
-            callback: function(value) {
-              return formatCurrency(value);
-            }
-          }
+          ticks: { callback: (val) => formatCurrency(val) }
         }
       }
     }
   });
 }
 
-// ================== ПОСЛЕДНИЕ ОПЕРАЦИИ ================== //
-
-function renderRecentTransactions() {
-  const container = document.getElementById('transactionsList');
-  if (!container) return;
-  
-  // Скрываем блок, т.к. нет данных от бэкенда
-  container.innerHTML = `
-    <div style="text-align: center; padding: 30px; color: #999;">
-      <i class="fas fa-clock" style="font-size: 32px; margin-bottom: 10px; display: block;"></i>
-      <div>Скоро здесь появится список операций</div>
-      <div style="font-size: 12px; margin-top: 5px;">Функция в разработке</div>
-    </div>
-  `;
-}
-
 // ================== ЗАГРУЗКА ДАННЫХ ================== //
 
-async function fetchAnalyticsData() {
+async function fetchAllData() {
   try {
-    const url = `${CONFIG.scriptURL}?action=getAnalytics`;
+    // Загружаем аналитику
+    const analyticsUrl = `${CONFIG.scriptURL}?action=getAnalytics`;
+    const analyticsRes = await fetch(analyticsUrl);
+    const analyticsData = await analyticsRes.json();
     
-    console.log('Загрузка данных с URL:', url);
+    // Загружаем транзакции за текущий период
+    const period = DOM.periodFilter.value;
+    const type = DOM.typeFilter.value;
+    const transUrl = `${CONFIG.scriptURL}?action=getTransactions&period=${period}&type=${type}&limit=100`;
+    const transRes = await fetch(transUrl);
+    const transData = await transRes.json();
     
-    const response = await fetch(url);
-    console.log('Ответ получен, статус:', response.status);
-    
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    
-    const data = await response.json();
-    console.log('Данные получены:', data);
-    
-    if (data.status === 'success' && data.data) {
-      state.allData = data.data;
+    if (analyticsData.status === 'success') {
+      state.allData = analyticsData.data;
     }
     
-    return data;
+    if (transData.status === 'success') {
+      state.transactions = transData.transactions;
+    }
+    
   } catch (error) {
-    console.error('Ошибка загрузки аналитики:', error);
+    console.error('Ошибка загрузки:', error);
     throw error;
   }
 }
 
 async function updateAnalytics() {
   try {
-    console.log('=== НАЧАЛО ОБНОВЛЕНИЯ АНАЛИТИКИ ===');
+    // Всегда перезагружаем данные при изменении фильтров
+    await fetchAllData();
     
-    if (!state.allData) {
-      await fetchAnalyticsData();
-    }
-    
-    if (!state.allData) {
-      throw new Error('Не удалось загрузить данные');
-    }
+    if (!state.allData) return;
     
     const period = DOM.periodFilter.value;
     const type = DOM.typeFilter.value;
     
-    console.log('Применяем фильтры:', { period, type });
-    
-    // Фильтруем по периоду
-    let filteredData = filterDataByPeriod(state.allData, period);
+    // Фильтруем по периоду (пересчитываем категории из транзакций)
+    let filtered = filterDataByPeriod(state.allData, state.transactions, period);
     
     // Фильтруем по типу
-    filteredData = filterDataByType(filteredData, type);
+    filtered = filterDataByType(filtered, type);
     
-    console.log('Отфильтрованные данные:', filteredData);
-    
-    // Обновляем дашборд
-    updateDashboard(filteredData.summary.income, filteredData.summary.expenses);
-    
-    // Обновляем графики
-    renderCharts(filteredData);
-    
-    // Обновляем транзакции (заглушка)
-    renderRecentTransactions();
-    
-    console.log('=== КОНЕЦ ОБНОВЛЕНИЯ АНАЛИТИКИ ===');
+    // Обновляем всё
+    updateDashboard(filtered.summary.income, filtered.summary.expenses);
+    renderTransactions(filtered.transactions);
+    renderCharts(filtered);
     
   } catch (error) {
-    console.error('Ошибка в updateAnalytics:', error);
-    showToast('Не удалось загрузить аналитику', 'error');
+    console.error('Ошибка:', error);
+    showToast('Ошибка загрузки данных', 'error');
   }
 }
 
@@ -527,13 +514,6 @@ async function handleFormSubmit(event) {
   try {
     const formData = new FormData(DOM.form);
     
-    console.log('Отправка формы:', {
-      date: formData.get('date'),
-      category: formData.get('category'),
-      sum: formData.get('sum'),
-      type: formData.get('type')
-    });
-    
     const response = await fetch(CONFIG.scriptURL, {
       method: 'POST',
       body: formData
@@ -541,21 +521,16 @@ async function handleFormSubmit(event) {
 
     if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
     
-    const result = await response.json();
-    console.log('Ответ от сервера:', result);
-    
-    showToast('Данные успешно сохранены! ✅');
+    showToast('Данные сохранены! ✅');
     DOM.form.reset();
-    
     DOM.dateInput.value = new Date().toISOString().split('T')[0];
     
-    // Сбрасываем кэш и перезагружаем
-    state.allData = null;
+    // Перезагружаем всё
     setTimeout(updateAnalytics, 1000);
 
   } catch (error) {
-    console.error('Ошибка отправки формы:', error);
-    showToast(error.message || 'Ошибка сохранения', 'error');
+    console.error('Ошибка:', error);
+    showToast('Ошибка сохранения', 'error');
   } finally {
     DOM.submitBtn.disabled = false;
     DOM.buttonText.textContent = 'Сохранить';
@@ -570,78 +545,62 @@ function showToast(message, type = 'success') {
   setTimeout(() => DOM.toast.classList.remove('show'), 3000);
 }
 
-// ================== ОБРАБОТЧИКИ СОБЫТИЙ ================== //
+// ================== ИНИЦИАЛИЗАЦИЯ ================== //
 
 function setupEventListeners() {
   DOM.form.addEventListener('submit', handleFormSubmit);
   
-  if (DOM.periodFilter) {
-    DOM.periodFilter.addEventListener('change', updateAnalytics);
-  }
+  DOM.periodFilter.addEventListener('change', updateAnalytics);
+  DOM.typeFilter.addEventListener('change', updateAnalytics);
   
-  if (DOM.typeFilter) {
-    DOM.typeFilter.addEventListener('change', updateAnalytics);
-  }
+  DOM.showIncome.addEventListener('change', () => {
+    if (state.allData) {
+      const filtered = filterDataByPeriod(state.allData, state.transactions, DOM.periodFilter.value);
+      updateMonthlyChart(filtered.monthly);
+    }
+  });
   
-  if (DOM.showIncome) {
-    DOM.showIncome.addEventListener('change', () => {
-      if (state.allData) {
-        const filtered = filterDataByPeriod(state.allData, DOM.periodFilter.value);
-        updateMonthlyChart(filtered.monthly);
-      }
-    });
-  }
+  DOM.showExpenses.addEventListener('change', () => {
+    if (state.allData) {
+      const filtered = filterDataByPeriod(state.allData, state.transactions, DOM.periodFilter.value);
+      updateMonthlyChart(filtered.monthly);
+    }
+  });
   
-  if (DOM.showExpenses) {
-    DOM.showExpenses.addEventListener('change', () => {
-      if (state.allData) {
-        const filtered = filterDataByPeriod(state.allData, DOM.periodFilter.value);
-        updateMonthlyChart(filtered.monthly);
-      }
-    });
-  }
+  DOM.showBalance.addEventListener('change', () => {
+    if (state.allData) {
+      const filtered = filterDataByPeriod(state.allData, state.transactions, DOM.periodFilter.value);
+      updateMonthlyChart(filtered.monthly);
+    }
+  });
   
-  if (DOM.showBalance) {
-    DOM.showBalance.addEventListener('change', () => {
-      if (state.allData) {
-        const filtered = filterDataByPeriod(state.allData, DOM.periodFilter.value);
-        updateMonthlyChart(filtered.monthly);
-      }
-    });
-  }
-  
-  window.addEventListener('resize', handleMobileLayout);
-  document.addEventListener('gesturestart', (e) => e.preventDefault());
+  window.addEventListener('resize', () => {
+    const formWrapper = document.querySelector('.form-wrapper');
+    if (formWrapper) {
+      formWrapper.style.width = window.innerWidth < CONFIG.maxMobileWidth 
+        ? 'calc(100vw - 30px)' 
+        : '';
+    }
+  });
 }
-
-function handleMobileLayout() {
-  const formWrapper = document.querySelector('.form-wrapper');
-  if (!formWrapper) return;
-  
-  formWrapper.style.width = window.innerWidth < CONFIG.maxMobileWidth 
-    ? 'calc(100vw - 30px)' 
-    : '';
-}
-
-// ================== ИНИЦИАЛИЗАЦИЯ ================== //
 
 function initApp() {
-  console.log('=== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ ===');
-  
-  if (DOM.dateInput) {
-    DOM.dateInput.value = new Date().toISOString().split('T')[0];
-  }
+  DOM.dateInput.value = new Date().toISOString().split('T')[0];
   
   setupEventListeners();
-  handleMobileLayout();
   updateAnalytics();
   
+  // Дашборд свёрнут, операции развёрнуты по умолчанию
   state.dashboardExpanded = false;
+  state.transactionsExpanded = true;
   
-  console.log('=== ИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА ===');
+  // Устанавливаем начальное состояние
+  document.querySelector('.dashboard-content').classList.remove('expanded');
+  document.querySelector('.transactions-content').classList.add('expanded');
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
 
 window.toggleDashboard = toggleDashboard;
+window.toggleTransactions = toggleTransactions;
 window.updateAnalytics = updateAnalytics;

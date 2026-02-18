@@ -593,3 +593,69 @@ canvas {
     margin: 0 auto;
   }
 }
+
+/* Стили для блока операций */
+.transactions-wrapper {
+  width: 100%;
+  max-width: var(--max-form-width);
+  margin: 0 auto 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.transactions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 25px;
+  background: linear-gradient(135deg, rgba(155, 196, 178, 0.2) 0%, rgba(184, 213, 197, 0.2) 100%);
+  cursor: pointer;
+  transition: background 0.3s;
+  user-select: none;
+}
+
+.transactions-header:active {
+  background: linear-gradient(135deg, rgba(155, 196, 178, 0.3) 0%, rgba(184, 213, 197, 0.3) 100%);
+}
+
+.transactions-header h2 {
+  font-family: var(--font-alt);
+  font-size: 18px;
+  color: var(--primary-dark);
+  margin: 0;
+  font-weight: 500;
+}
+
+.transactions-header i {
+  color: var(--primary-dark);
+  transition: transform 0.3s;
+  font-size: 16px;
+}
+
+.transactions-header.expanded i {
+  transform: rotate(180deg);
+}
+
+.transactions-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.transactions-content.expanded {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.transactions-list {
+  padding: 15px;
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 400px) {
+  .transactions-content.expanded {
+    max-height: 400px;
+  }
+}

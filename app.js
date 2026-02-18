@@ -1,311 +1,314 @@
+// Конфигурация приложения
 const CONFIG = {
+  // ВАШ URL Google Apps Script (используется и для POST, и для GET)
   scriptURL: 'https://script.google.com/macros/s/AKfycbxF4DtXNNpib9q6jBKbIu3See4I_wSkuzUJLcxpD5QCtWZe6FmanIva1Xq_HDIc1rWG5Q/exec',
+  maxMobileWidth: 500,
   colors: {
-    categories: ['#9bc4b2', '#7daf95', '#6a8f7e', '#b8d5c5', '#88c9a1', '#a8d7b9', '#e1a692', '#d4a5a5', '#f4a261', '#2a9d8f', '#264653', '#e9c46a', '#e76f51'],
+    categories: ['#9bc4b2', '#7daf95', '#6a8f7e', '#b8d5c5', '#88c9a1', '#a8d7b9', '#e1a692', '#d4b896'],
     income: '#7daf95',
-    expenses: '#e1a692',
-    balance: '#9bc4b2'
+    expenses: '#e1a692'
   }
 };
 
-let charts = {};
-
-function formatMoney(n) {
-  return new Intl.NumberFormat('ru-RU', {style: 'currency', currency: 'RUB', maximumFractionDigits: 0}).format(n || 0);
-}
-
-function toggleSection(name) {
-  const content = document.getElementById(name + '-content');
-  const icon = document.getElementById(name + '-icon');
-  if (content && icon) {
-    content.classList.toggle('expanded');
-    icon.classList.toggle('rotated');
+// Состояние приложения
+const state = {
+  isSubmitting: false,
+  charts: {
+    category: null,
+    monthly: null
   }
+};
+
+// Инициализация DOM элементов
+const DOM = {
+  form: document.getElementById('budgetForm'),
+  submitBtn: document.getElementById('submitBtn'),
+  buttonText: document.getElementById('buttonText'),
+  spinner: document.getElementById('spinner'),
+  toast: document.getElementById('toast'),
+  dateInput: document.getElementById('date'),
+  periodFilter: document.getElementById('periodFilter'),
+  summaryIncome: document.getElementById('summaryIncome'),
+  summaryExpenses: document.getElementById('summaryExpenses'),
+  summaryBalance: document.getElementById('summaryBalance'),
+  transactionsList: document.getElementById('transactionsList'),
+  categoryEmpty: document.getElementById('categoryEmpty'),
+  monthlyEmpty: document.getElementById('monthlyEmpty')
+};
+
+// ================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ================== //
+
+function handleMobileLayout() {
+  const formWrapper = document.querySelector('.form-wrapper');
+  if (!formWrapper) return;
+  formWrapper.style.width = window.innerWidth < CONFIG.maxMobileWidth
+    ? 'calc(100vw - 30px)'
+    : '';
 }
 
-async function loadData() {
-  const period = document.getElementById('periodFilter')?.value || 'current_month';
-  const type = document.getElementById('typeFilter')?.value || 'all';
-  
-  console.log('Загрузка данных:', {period, type});
-  
-  try {
-    const url = `${CONFIG.scriptURL}?action=getAnalytics&period=${period}&type=${type}`;
-    console.log('URL:', url);
-    
-    const res = await fetch(url);
-    const data = await res.json();
-    
-    console.log('Ответ:', data);
-    
-    if (data.status !== 'success') {
-      console.error('Ошибка в ответе:', data);
-      showToast(data.message || 'Ошибка загрузки', 'error');
-      return;
-    }
-    
-    // Проверяем структуру данных
-    if (!data.summary) {
-      console.error('Нет summary в данных:', data);
-      showToast('Некорректные данные от сервера', 'error');
-      return;
-    }
-    
-    updateDashboard(data.summary);
-    updateTransactions(data.transactions || []);
-    updateCharts(data);
-    
-  } catch (e) {
-    console.error('Ошибка загрузки:', e);
-    showToast('Ошибка соединения', 'error');
-  }
+function showToast(message, type = 'success') {
+  DOM.toast.textContent = message;
+  DOM.toast.className = `toast show ${type}`;
+  setTimeout(() => DOM.toast.classList.remove('show'), 3000);
 }
 
-function updateDashboard(summary) {
-  console.log('Обновление дашборда:', summary);
-  
-  const incomeEl = document.getElementById('totalIncome');
-  const expenseEl = document.getElementById('totalExpense');
-  const balanceEl = document.getElementById('totalBalance');
-  const card = document.getElementById('balanceCard');
-  
-  if (incomeEl) incomeEl.textContent = formatMoney(summary.income);
-  if (expenseEl) expenseEl.textContent = formatMoney(summary.expenses);
-  if (balanceEl) balanceEl.textContent = formatMoney(summary.balance);
-  
-  if (card) {
-    if ((summary.balance || 0) < 0) card.classList.add('negative');
-    else card.classList.remove('negative');
-  }
+function formatMoney(amount) {
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'RUB',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
 }
 
-function updateTransactions(list) {
-  console.log('Обновление операций:', list);
-  
-  const container = document.getElementById('transactionsList');
-  if (!container) return;
-  
-  if (!list || list.length === 0) {
-    container.innerHTML = '<div class="loading-text">Нет операций за выбранный период</div>';
+// ================== ЗАГРУЗКА ДАННЫХ ================== //
+
+/**
+ * Загрузка данных аналитики с Google Apps Script.
+ * Используем no-cors не подойдёт (не получим тело), поэтому
+ * Google Apps Script должен возвращать CORS-заголовки.
+ * При наличии правильного скрипта (doGet) это работает автоматически.
+ */
+async function fetchAnalyticsData(period = 'current_month') {
+  const url = `${CONFIG.scriptURL}?period=${period}`;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return await response.json();
+}
+
+// ================== ОТРИСОВКА ================== //
+
+/**
+ * Обновление карточек сводки
+ */
+function renderSummary(summary) {
+  if (!summary) return;
+  DOM.summaryIncome.textContent = formatMoney(summary.income || 0);
+  DOM.summaryExpenses.textContent = formatMoney(summary.expenses || 0);
+  const balance = summary.balance || 0;
+  DOM.summaryBalance.textContent = formatMoney(balance);
+  DOM.summaryBalance.parentElement.classList.toggle('negative', balance < 0);
+}
+
+/**
+ * Отрисовка последних операций
+ */
+function renderTransactions(transactions) {
+  if (!transactions || transactions.length === 0) {
+    DOM.transactionsList.innerHTML = '<p class="no-data">Операций за выбранный период нет</p>';
     return;
   }
-  
-  const icons = {
-    '🛒 Продукты': '🛒', '🏥 Здоровье': '🏥', '🏠 Дом': '🏠', '🚗 Автомобиль': '🚗',
-    '🐱 Кот': '🐱', '📱 Связь': '📱', '👕 Одежда': '👕', '🍽️ Кафе/Рестораны': '🍽️',
-    '🍱 Обед на работе': '🍱', '🎮 Развлечения': '🎮', '💄 Косметика': '💄',
-    '💡 Коммуналка': '💡', '🏡 Ипотека': '🏡', '🛏 Аренда': '🛏',
-    '🚕 Такси/Общ. транспорт': '🚕', '✈️ Авиа / ЖД билеты': '✈️',
-    '🌎 Отпуск': '🌎', '❗ Непредвиденное': '❗', '🥊🏈⚽️ Спорт': '⚽', '💰 Доход': '💰'
-  };
-  
-  container.innerHTML = list.map(t => {
-    const isInc = t.type === 'Доход';
+
+  const rows = transactions.map(t => {
+    const isIncome = t.type === 'Доход';
     return `
-      <div class="transaction-item">
-        <div class="transaction-icon">${icons[t.category] || '💸'}</div>
-        <div class="transaction-info">
-          <div class="transaction-category">${t.category || 'Без категории'}</div>
-          ${t.description ? `<div class="transaction-description">${t.description}</div>` : ''}
-          <div class="transaction-date">${t.date || '-'}</div>
+      <div class="transaction-row ${isIncome ? 'income' : 'expense'}">
+        <div class="tr-left">
+          <span class="tr-category">${t.category || '—'}</span>
+          ${t.description ? `<span class="tr-desc">${t.description}</span>` : ''}
         </div>
-        <div class="transaction-amount ${isInc ? 'income' : 'expense'}">
-          ${isInc ? '+' : '-'}${formatMoney(t.amount)}
+        <div class="tr-right">
+          <span class="tr-amount">${isIncome ? '+' : '-'}${formatMoney(t.amount)}</span>
+          <span class="tr-date">${t.date}</span>
         </div>
       </div>
     `;
   }).join('');
+
+  DOM.transactionsList.innerHTML = rows;
 }
 
-function updateCharts(data) {
-  console.log('Обновление графиков:', data);
-  
-  // Уничтожаем старые
-  if (charts.category) {
-    charts.category.destroy();
-    charts.category = null;
-  }
-  if (charts.monthly) {
-    charts.monthly.destroy();
-    charts.monthly = null;
-  }
-  
-  // Проверяем данные
-  if (!data.categories || !data.monthly) {
-    console.error('Нет данных для графиков:', data);
-    return;
-  }
-  
-  // Круговой график
-  const catCanvas = document.getElementById('categoryChart');
-  if (catCanvas && data.categories.labels && data.categories.labels.length > 0) {
-    const ctx = catCanvas.getContext('2d');
-    charts.category = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: data.categories.labels,
-        datasets: [{
-          data: data.categories.values,
-          backgroundColor: CONFIG.colors.categories,
-          borderWidth: 2,
-          borderColor: '#fff'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {position: 'bottom', labels: {font: {size: 11}, boxWidth: 12}},
-          tooltip: {
-            callbacks: {
-              label: (ctx) => {
-                const sum = ctx.dataset.data.reduce((a,b) => a+b, 0);
-                const pct = ((ctx.parsed / sum) * 100).toFixed(1);
-                return `${ctx.label}: ${formatMoney(ctx.parsed)} (${pct}%)`;
+/**
+ * Отрисовка графиков
+ */
+function renderCharts(data) {
+  // ---- Круговой: расходы по категориям ----
+  const catLabels = data.categories ? data.categories.labels : [];
+  const catValues = data.categories ? data.categories.values : [];
+
+  if (state.charts.category) state.charts.category.destroy();
+
+  if (catLabels.length === 0) {
+    document.getElementById('categoryChart').style.display = 'none';
+    DOM.categoryEmpty.style.display = 'block';
+  } else {
+    document.getElementById('categoryChart').style.display = 'block';
+    DOM.categoryEmpty.style.display = 'none';
+    state.charts.category = new Chart(
+      document.getElementById('categoryChart').getContext('2d'),
+      {
+        type: 'doughnut',
+        data: {
+          labels: catLabels,
+          datasets: [{
+            data: catValues,
+            backgroundColor: CONFIG.colors.categories,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right' },
+            tooltip: {
+              callbacks: {
+                label: ctx => ` ${ctx.label}: ${formatMoney(ctx.raw)}`
               }
             }
           }
         }
       }
-    });
-  } else if (catCanvas) {
-    // Очищаем canvas если нет данных
-    const ctx = catCanvas.getContext('2d');
-    ctx.clearRect(0, 0, catCanvas.width, catCanvas.height);
-    ctx.font = '14px Arial';
-    ctx.fillStyle = '#999';
-    ctx.textAlign = 'center';
-    ctx.fillText('Нет данных', catCanvas.width/2, catCanvas.height/2);
+    );
   }
-  
-  // Столбчатый график
-  const showInc = document.getElementById('showIncome')?.checked ?? true;
-  const showExp = document.getElementById('showExpenses')?.checked ?? true;
-  const showBal = document.getElementById('showBalance')?.checked ?? false;
-  
-  const datasets = [];
-  if (showInc && data.monthly.income) {
-    datasets.push({
-      label: 'Доходы', 
-      data: data.monthly.income, 
-      backgroundColor: CONFIG.colors.income, 
-      borderRadius: 4
-    });
-  }
-  if (showExp && data.monthly.expenses) {
-    datasets.push({
-      label: 'Расходы', 
-      data: data.monthly.expenses, 
-      backgroundColor: CONFIG.colors.expenses, 
-      borderRadius: 4
-    });
-  }
-  if (showBal && data.monthly.income && data.monthly.expenses) {
-    const bal = data.monthly.income.map((v, i) => v - data.monthly.expenses[i]);
-    datasets.push({
-      label: 'Баланс', 
-      data: bal, 
-      type: 'line', 
-      borderColor: CONFIG.colors.balance, 
-      borderWidth: 2, 
-      pointRadius: 4
-    });
-  }
-  
-  const monCanvas = document.getElementById('monthlyChart');
-  if (monCanvas && datasets.length > 0 && data.monthly.labels && data.monthly.labels.length > 0) {
-    charts.monthly = new Chart(monCanvas.getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels: data.monthly.labels,
-        datasets: datasets
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {position: 'bottom'},
-          tooltip: {callbacks: {label: (ctx) => `${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)}`}}
+
+  // ---- Столбчатый: доходы и расходы по месяцам ----
+  const monthLabels = data.monthly ? data.monthly.labels : [];
+
+  if (state.charts.monthly) state.charts.monthly.destroy();
+
+  if (monthLabels.length === 0) {
+    document.getElementById('monthlyChart').style.display = 'none';
+    DOM.monthlyEmpty.style.display = 'block';
+  } else {
+    document.getElementById('monthlyChart').style.display = 'block';
+    DOM.monthlyEmpty.style.display = 'none';
+    state.charts.monthly = new Chart(
+      document.getElementById('monthlyChart').getContext('2d'),
+      {
+        type: 'bar',
+        data: {
+          labels: monthLabels,
+          datasets: [
+            {
+              label: 'Доходы',
+              data: data.monthly.income,
+              backgroundColor: CONFIG.colors.income,
+              borderRadius: 6
+            },
+            {
+              label: 'Расходы',
+              data: data.monthly.expenses,
+              backgroundColor: CONFIG.colors.expenses,
+              borderRadius: 6
+            }
+          ]
         },
-        scales: {
-          y: {beginAtZero: true, ticks: {callback: (v) => formatMoney(v)}}
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: val => formatMoney(val)
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: ctx => ` ${ctx.dataset.label}: ${formatMoney(ctx.raw)}`
+              }
+            }
+          }
         }
       }
-    });
+    );
   }
 }
 
-// Отправка формы
-document.getElementById('budgetForm')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const btn = document.getElementById('submitBtn');
-  const txt = document.getElementById('buttonText');
-  const spin = document.getElementById('spinner');
-  
-  if (!btn || !txt || !spin) return;
-  
-  btn.disabled = true;
-  txt.textContent = 'Сохранение...';
-  spin.classList.remove('hidden');
-  
+// ================== ОБНОВЛЕНИЕ АНАЛИТИКИ ================== //
+
+async function updateAnalytics() {
+  const period = DOM.periodFilter ? DOM.periodFilter.value : 'current_month';
+
+  // Показываем заглушку загрузки
+  DOM.transactionsList.innerHTML = '<p class="loading-text">Загрузка...</p>';
+  DOM.summaryIncome.textContent = '...';
+  DOM.summaryExpenses.textContent = '...';
+  DOM.summaryBalance.textContent = '...';
+
   try {
-    const res = await fetch(CONFIG.scriptURL, {
-      method: 'POST',
-      body: new FormData(e.target)
-    });
-    
-    const data = await res.json();
-    
-    if (data.status === 'success') {
-      showToast('Сохранено! ✅');
-      e.target.reset();
-      const dateInput = document.getElementById('date');
-      if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-      setTimeout(loadData, 500);
-    } else {
-      showToast(data.message || 'Ошибка', 'error');
+    const data = await fetchAnalyticsData(period);
+
+    if (data.status !== 'success') {
+      throw new Error(data.message || 'Ошибка сервера');
     }
-    
-  } catch (err) {
-    console.error(err);
-    showToast('Ошибка соединения', 'error');
-  } finally {
-    btn.disabled = false;
-    txt.textContent = 'Сохранить';
-    spin.classList.add('hidden');
+
+    renderSummary(data.summary);
+    renderCharts(data);
+    renderTransactions(data.transactions);
+
+  } catch (error) {
+    console.error('Ошибка загрузки аналитики:', error);
+    DOM.transactionsList.innerHTML = '<p class="no-data">Не удалось загрузить данные. Проверьте подключение.</p>';
+    DOM.summaryIncome.textContent = '—';
+    DOM.summaryExpenses.textContent = '—';
+    DOM.summaryBalance.textContent = '—';
+    showToast('Не удалось загрузить аналитику', 'error');
   }
-});
-
-// Обработчики фильтров
-document.getElementById('periodFilter')?.addEventListener('change', loadData);
-document.getElementById('typeFilter')?.addEventListener('change', loadData);
-
-// Тогглы графика
-['showIncome', 'showExpenses', 'showBalance'].forEach(id => {
-  document.getElementById(id)?.addEventListener('change', loadData);
-});
-
-function showToast(msg, type = 'success') {
-  const t = document.getElementById('toast');
-  if (!t) return;
-  t.textContent = msg;
-  t.className = `toast show ${type}`;
-  setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// Инициализация
-document.addEventListener('DOMContentLoaded', () => {
-  const dateInput = document.getElementById('date');
-  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-  
-  // Разворачиваем секции по умолчанию
-  const transContent = document.getElementById('transactions-content');
-  const transIcon = document.getElementById('transactions-icon');
-  if (transContent && transIcon) {
-    transContent.classList.add('expanded');
-    transIcon.classList.add('rotated');
+// ================== ОТПРАВКА ФОРМЫ ================== //
+
+async function handleFormSubmit(event) {
+  event.preventDefault();
+  if (state.isSubmitting) return;
+
+  state.isSubmitting = true;
+  DOM.submitBtn.disabled = true;
+  DOM.buttonText.textContent = 'Сохранение...';
+  DOM.spinner.classList.remove('hidden');
+
+  try {
+    const formData = new FormData(DOM.form);
+    const response = await fetch(CONFIG.scriptURL, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
+
+    const result = await response.json();
+    if (result.status !== 'success') throw new Error(result.message || 'Ошибка сохранения');
+
+    showToast('Данные успешно сохранены!');
+    DOM.form.reset();
+    DOM.dateInput.value = new Date().toISOString().split('T')[0];
+
+    // Обновляем аналитику через секунду
+    setTimeout(updateAnalytics, 1000);
+
+  } catch (error) {
+    console.error('Ошибка отправки формы:', error);
+    showToast(error.message || 'Ошибка сохранения', 'error');
+  } finally {
+    DOM.submitBtn.disabled = false;
+    DOM.buttonText.textContent = 'Сохранить';
+    DOM.spinner.classList.add('hidden');
+    state.isSubmitting = false;
   }
-  
-  loadData();
-});
+}
+
+// ================== ИНИЦИАЛИЗАЦИЯ ================== //
+
+function initApp() {
+  DOM.dateInput.value = new Date().toISOString().split('T')[0];
+
+  DOM.form.addEventListener('submit', handleFormSubmit);
+  window.addEventListener('resize', handleMobileLayout);
+  document.addEventListener('gesturestart', e => e.preventDefault());
+
+  if (DOM.periodFilter) {
+    DOM.periodFilter.addEventListener('change', updateAnalytics);
+  }
+
+  handleMobileLayout();
+  updateAnalytics();
+}
+
+document.addEventListener('DOMContentLoaded', initApp);
+
+// Глобальный доступ
+window.updateAnalytics = updateAnalytics;

@@ -3,7 +3,7 @@ const CONFIG = {
   scriptURL: 'https://script.google.com/macros/s/AKfycbxF4DtXNNpib9q6jBKbIu3See4I_wSkuzUJLcxpD5QCtWZe6FmanIva1Xq_HDIc1rWG5Q/exec',
   maxMobileWidth: 500,
   colors: {
-    categories: ['#9bc4b2', '#7daf95', '#6a8f7e', '#b8d5c5', '#88c9a1', '#a8d7b9', '#e1a692', '#d4a5a5', '#f4a261', '#2a9d8f'],
+    categories: ['#9bc4b2', '#7daf95', '#6a8f7e', '#b8d5c5', '#88c9a1', '#a8d7b9', '#e1a692', '#d4a5a5', '#f4a261', '#2a9d8f', '#264653', '#2a9d8f', '#e9c46a', '#f4a261', '#e76f51'],
     income: '#7daf95',
     expenses: '#e1a692',
     balance: '#9bc4b2'
@@ -17,7 +17,7 @@ const state = {
     category: null,
     monthly: null
   },
-  allData: null, // Все данные для фильтрации
+  allData: null,
   dashboardExpanded: false
 };
 
@@ -56,38 +56,44 @@ function getDateRange(period) {
     case 'current_month':
       return {
         start: new Date(today.getFullYear(), today.getMonth(), 1),
-        end: today
+        end: today,
+        label: `${String(today.getMonth() + 1).padStart(2, '0')}.${today.getFullYear()}`
       };
     case 'last_month':
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
       return {
-        start: new Date(today.getFullYear(), today.getMonth() - 1, 1),
-        end: new Date(today.getFullYear(), today.getMonth(), 0)
+        start: lastMonth,
+        end: new Date(today.getFullYear(), today.getMonth(), 0),
+        label: `${String(lastMonth.getMonth() + 1).padStart(2, '0')}.${lastMonth.getFullYear()}`
       };
     case 'last_3':
       return {
         start: new Date(today.getFullYear(), today.getMonth() - 2, 1),
-        end: today
+        end: today,
+        label: 'last_3'
       };
     case 'last_6':
       return {
         start: new Date(today.getFullYear(), today.getMonth() - 5, 1),
-        end: today
+        end: today,
+        label: 'last_6'
       };
     case 'year':
       return {
         start: new Date(today.getFullYear(), 0, 1),
-        end: today
+        end: today,
+        label: 'year'
       };
     default:
       return {
         start: new Date(today.getFullYear(), today.getMonth(), 1),
-        end: today
+        end: today,
+        label: 'current'
       };
   }
 }
 
 function parseMonthLabel(label) {
-  // Преобразуем "04.2025" в Date
   const [month, year] = label.split('.').map(Number);
   return new Date(year, month - 1, 1);
 }
@@ -130,6 +136,8 @@ function updateDashboard(income, expenses) {
 
 function filterDataByPeriod(data, period) {
   const range = getDateRange(period);
+  
+  // Фильтруем месяцы
   const filteredMonthly = {
     labels: [],
     income: [],
@@ -155,9 +163,27 @@ function filterDataByPeriod(data, period) {
     }
   });
   
+  // Для категорий: если выбран конкретный месяц, пропорционально распределяем
+  // Если диапазон — берём все категории (т.к. нет детальных данных)
+  let filteredCategories = data.categories;
+  
+  if (period === 'current_month' || period === 'last_month') {
+    // Для одного месяца пытаемся оценить пропорции
+    const totalExpensesAllTime = data.categories.values.reduce((a, b) => a + b, 0);
+    const totalExpensesPeriod = totalExpenses;
+    
+    if (totalExpensesAllTime > 0 && totalExpensesPeriod > 0) {
+      const ratio = totalExpensesPeriod / totalExpensesAllTime;
+      filteredCategories = {
+        labels: data.categories.labels,
+        values: data.categories.values.map(v => Math.round(v * ratio))
+      };
+    }
+  }
+  
   return {
     monthly: filteredMonthly,
-    categories: data.categories, // Категории не фильтруем по периоду (сложно без дат)
+    categories: filteredCategories,
     summary: {
       income: totalIncome,
       expenses: totalExpenses,
@@ -169,14 +195,14 @@ function filterDataByPeriod(data, period) {
 function filterDataByType(data, type) {
   if (type === 'all') return data;
   
-  // Для типа фильтруем только категории (расходы)
+  // Фильтруем категории по типу
   const filteredCategories = {
     labels: [],
     values: []
   };
   
   if (type === 'expense') {
-    // Оставляем только расходы (все категории кроме Дохода)
+    // Все категории кроме Дохода
     data.categories.labels.forEach((label, index) => {
       if (label !== '💰 Доход') {
         filteredCategories.labels.push(label);
@@ -184,7 +210,7 @@ function filterDataByType(data, type) {
       }
     });
   } else if (type === 'income') {
-    // Только доходы
+    // Только Доход
     data.categories.labels.forEach((label, index) => {
       if (label === '💰 Доход') {
         filteredCategories.labels.push(label);
@@ -193,9 +219,26 @@ function filterDataByType(data, type) {
     });
   }
   
+  // Для monthly: если выбран только доход или только расход
+  let filteredMonthly = data.monthly;
+  if (type === 'income') {
+    filteredMonthly = {
+      labels: data.monthly.labels,
+      income: data.monthly.income,
+      expenses: data.monthly.expenses.map(() => 0) // Обнуляем расходы
+    };
+  } else if (type === 'expense') {
+    filteredMonthly = {
+      labels: data.monthly.labels,
+      income: data.monthly.income.map(() => 0), // Обнуляем доходы
+      expenses: data.monthly.expenses
+    };
+  }
+  
   return {
     ...data,
-    categories: filteredCategories
+    categories: filteredCategories,
+    monthly: filteredMonthly
   };
 }
 
@@ -210,43 +253,67 @@ function renderCharts(data) {
     // 1. Круговой график категорий
     const categoryCanvas = document.getElementById('categoryChart');
     if (categoryCanvas && data.categories.labels.length > 0) {
-      const categoryCtx = categoryCanvas.getContext('2d');
-      state.charts.category = new Chart(categoryCtx, {
-        type: 'doughnut',
-        data: {
-          labels: data.categories.labels,
-          datasets: [{
-            data: data.categories.values,
-            backgroundColor: CONFIG.colors.categories,
-            borderWidth: 2,
-            borderColor: '#fff'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                padding: 15,
-                font: { size: 12 }
-              }
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const label = context.label || '';
-                  const value = formatCurrency(context.parsed);
-                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                  const percentage = ((context.parsed / total) * 100).toFixed(1);
-                  return `${label}: ${value} (${percentage}%)`;
+      // Фильтруем категории с нулевыми значениями
+      const nonZeroCategories = {
+        labels: [],
+        values: []
+      };
+      
+      data.categories.labels.forEach((label, index) => {
+        if (data.categories.values[index] > 0) {
+          nonZeroCategories.labels.push(label);
+          nonZeroCategories.values.push(data.categories.values[index]);
+        }
+      });
+      
+      if (nonZeroCategories.labels.length > 0) {
+        const categoryCtx = categoryCanvas.getContext('2d');
+        state.charts.category = new Chart(categoryCtx, {
+          type: 'doughnut',
+          data: {
+            labels: nonZeroCategories.labels,
+            datasets: [{
+              data: nonZeroCategories.values,
+              backgroundColor: CONFIG.colors.categories,
+              borderWidth: 2,
+              borderColor: '#fff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 15,
+                  font: { size: 11 },
+                  boxWidth: 12
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const label = context.label || '';
+                    const value = formatCurrency(context.parsed);
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                    return `${label}: ${value} (${percentage}%)`;
+                  }
                 }
               }
             }
           }
-        }
-      });
+        });
+      } else {
+        // Нет данных для отображения
+        const ctx = categoryCanvas.getContext('2d');
+        ctx.clearRect(0, 0, categoryCanvas.width, categoryCanvas.height);
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#999';
+        ctx.textAlign = 'center';
+        ctx.fillText('Нет данных за выбранный период', categoryCanvas.width / 2, categoryCanvas.height / 2);
+      }
     }
 
     // 2. График динамики по месяцам
@@ -260,7 +327,6 @@ function renderCharts(data) {
 
 function updateMonthlyChart(monthlyData) {
   if (!monthlyData || monthlyData.labels.length === 0) {
-    // Очищаем canvas если нет данных
     const canvas = document.getElementById('monthlyChart');
     if (canvas) {
       const ctx = canvas.getContext('2d');
@@ -368,15 +434,20 @@ function renderRecentTransactions() {
   const container = document.getElementById('transactionsList');
   if (!container) return;
   
-  // Временно показываем заглушку, т.к. бэкенд не возвращает транзакции
-  container.innerHTML = '<div class="loading-text">Функция в разработке</div>';
+  // Скрываем блок, т.к. нет данных от бэкенда
+  container.innerHTML = `
+    <div style="text-align: center; padding: 30px; color: #999;">
+      <i class="fas fa-clock" style="font-size: 32px; margin-bottom: 10px; display: block;"></i>
+      <div>Скоро здесь появится список операций</div>
+      <div style="font-size: 12px; margin-top: 5px;">Функция в разработке</div>
+    </div>
+  `;
 }
 
 // ================== ЗАГРУЗКА ДАННЫХ ================== //
 
 async function fetchAnalyticsData() {
   try {
-    // Всегда загружаем все данные (бэкенд не фильтрует)
     const url = `${CONFIG.scriptURL}?action=getAnalytics`;
     
     console.log('Загрузка данных с URL:', url);
@@ -389,7 +460,6 @@ async function fetchAnalyticsData() {
     const data = await response.json();
     console.log('Данные получены:', data);
     
-    // Сохраняем все данные для фильтрации
     if (data.status === 'success' && data.data) {
       state.allData = data.data;
     }
@@ -405,7 +475,6 @@ async function updateAnalytics() {
   try {
     console.log('=== НАЧАЛО ОБНОВЛЕНИЯ АНАЛИТИКИ ===');
     
-    // Загружаем данные только если ещё не загружены
     if (!state.allData) {
       await fetchAnalyticsData();
     }
@@ -414,7 +483,6 @@ async function updateAnalytics() {
       throw new Error('Не удалось загрузить данные');
     }
     
-    // Применяем фильтры на фронтенде
     const period = DOM.periodFilter.value;
     const type = DOM.typeFilter.value;
     
@@ -479,10 +547,9 @@ async function handleFormSubmit(event) {
     showToast('Данные успешно сохранены! ✅');
     DOM.form.reset();
     
-    // Обновляем дату
     DOM.dateInput.value = new Date().toISOString().split('T')[0];
     
-    // Сбрасываем кэш данных и перезагружаем
+    // Сбрасываем кэш и перезагружаем
     state.allData = null;
     setTimeout(updateAnalytics, 1000);
 
@@ -506,10 +573,8 @@ function showToast(message, type = 'success') {
 // ================== ОБРАБОТЧИКИ СОБЫТИЙ ================== //
 
 function setupEventListeners() {
-  // Форма
   DOM.form.addEventListener('submit', handleFormSubmit);
   
-  // Фильтры
   if (DOM.periodFilter) {
     DOM.periodFilter.addEventListener('change', updateAnalytics);
   }
@@ -518,7 +583,6 @@ function setupEventListeners() {
     DOM.typeFilter.addEventListener('change', updateAnalytics);
   }
   
-  // Тогглы графика
   if (DOM.showIncome) {
     DOM.showIncome.addEventListener('change', () => {
       if (state.allData) {
@@ -546,7 +610,6 @@ function setupEventListeners() {
     });
   }
   
-  // Мобильная оптимизация
   window.addEventListener('resize', handleMobileLayout);
   document.addEventListener('gesturestart', (e) => e.preventDefault());
 }
@@ -565,35 +628,20 @@ function handleMobileLayout() {
 function initApp() {
   console.log('=== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ ===');
   
-  console.log('DOM элементы:', {
-    form: !!DOM.form,
-    periodFilter: !!DOM.periodFilter,
-    typeFilter: !!DOM.typeFilter
-  });
-  
-  // Установка текущей даты
   if (DOM.dateInput) {
     DOM.dateInput.value = new Date().toISOString().split('T')[0];
   }
   
-  // Настройка обработчиков
   setupEventListeners();
-  
-  // Первичная настройка
   handleMobileLayout();
-  
-  // Загрузка данных
   updateAnalytics();
   
-  // Дашборд свёрнут по умолчанию
   state.dashboardExpanded = false;
   
-  console.log('=== ИНИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА ===');
+  console.log('=== ИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА ===');
 }
 
-// Запуск приложения
 document.addEventListener('DOMContentLoaded', initApp);
 
-// Экспорт для глобального доступа
 window.toggleDashboard = toggleDashboard;
 window.updateAnalytics = updateAnalytics;

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Считаем деньгиииии</title>
     <link rel="stylesheet" href="style.css">
@@ -11,20 +11,24 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="cat-icon.png">
     <meta name="apple-mobile-web-app-title" content="Бюджет">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="app-container">
-        <!-- Форма -->
+
+        <!-- Основная форма -->
         <div class="form-wrapper">
             <h1>Считаем деньгиииии</h1>
             <form id="budgetForm">
                 <div class="form-group">
-                    <label>Дата:</label>
+                    <label for="date">Дата:</label>
                     <input type="date" id="date" name="date" required>
                 </div>
+
                 <div class="form-group">
-                    <label>Категория:</label>
+                    <label for="category">Категория:</label>
                     <select id="category" name="category" required>
                         <option value="">Выберите категорию</option>
                         <option value="🛒 Продукты">🛒 Продукты</option>
@@ -49,116 +53,97 @@
                         <option value="💰 Доход">💰 Доход</option>
                     </select>
                 </div>
+
                 <div class="form-group">
-                    <label>Сумма:</label>
+                    <label for="sum">Сумма:</label>
                     <input type="number" id="sum" name="sum" placeholder="Введите сумму" required>
                 </div>
+
                 <div class="form-group">
-                    <label>Описание:</label>
+                    <label for="description">Описание:</label>
                     <input type="text" id="description" name="description" placeholder="Краткое описание">
                 </div>
+
                 <div class="form-group">
-                    <label>Тип:</label>
+                    <label for="type">Тип операции:</label>
                     <select id="type" name="type" required>
                         <option value="Расход">Расход</option>
                         <option value="Доход">Доход</option>
                     </select>
                 </div>
+
                 <button type="submit" id="submitBtn">
                     <span id="buttonText">Сохранить</span>
                     <div id="spinner" class="spinner hidden"></div>
                 </button>
             </form>
+
             <div id="toast" class="toast hidden"></div>
         </div>
 
-        <!-- Сводка -->
-        <div class="section-wrapper">
-            <div class="section-header" onclick="toggleSection('dashboard')">
-                <h2>📊 Сводка бюджета</h2>
-                <i class="fas fa-chevron-down" id="dashboard-icon"></i>
-            </div>
-            <div class="section-content" id="dashboard-content">
-                <div class="stats-grid">
-                    <div class="stat-card income">
-                        <i class="fas fa-arrow-up"></i>
-                        <div class="stat-value" id="totalIncome">0 ₽</div>
-                        <div class="stat-label">Доходы</div>
-                    </div>
-                    <div class="stat-card expense">
-                        <i class="fas fa-arrow-down"></i>
-                        <div class="stat-value" id="totalExpense">0 ₽</div>
-                        <div class="stat-label">Расходы</div>
-                    </div>
-                    <div class="stat-card balance" id="balanceCard">
-                        <i class="fas fa-wallet"></i>
-                        <div class="stat-value" id="totalBalance">0 ₽</div>
-                        <div class="stat-label">Баланс</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Операции -->
-        <div class="section-wrapper">
-            <div class="section-header" onclick="toggleSection('transactions')">
-                <h2>📝 Последние операции</h2>
-                <i class="fas fa-chevron-down" id="transactions-icon"></i>
-            </div>
-            <div class="section-content expanded" id="transactions-content">
-                <div id="transactionsList" class="transactions-list">
-                    <div class="loading-text">Загрузка...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Аналитика -->
+        <!-- Сводка бюджета -->
         <div class="analytics-wrapper">
-            <h2>📈 Аналитика бюджета</h2>
-            
-            <div class="filters-container">
-                <div class="filter-group">
-                    <label>Период:</label>
-                    <select id="periodFilter">
-                        <option value="current_month">Текущий месяц</option>
-                        <option value="last_month">Прошлый месяц</option>
-                        <option value="last_3">Последние 3 месяца</option>
-                        <option value="last_6">Последние 6 месяцев</option>
-                        <option value="year">Этот год</option>
-                    </select>
+            <h2>Сводка бюджета</h2>
+
+            <!-- Фильтр периода -->
+            <div class="filter-bar">
+                <label for="periodFilter">Период:</label>
+                <select id="periodFilter">
+                    <option value="current_month">Текущий месяц</option>
+                    <option value="last_month">Прошлый месяц</option>
+                    <option value="last_3">3 месяца</option>
+                    <option value="last_6">6 месяцев</option>
+                    <option value="year">Год</option>
+                </select>
+            </div>
+
+            <!-- Карточки сводки -->
+            <div class="summary-cards" id="summaryCards">
+                <div class="summary-card income-card">
+                    <div class="summary-label">Доходы</div>
+                    <div class="summary-value" id="summaryIncome">—</div>
                 </div>
-                <div class="filter-group">
-                    <label>Тип:</label>
-                    <select id="typeFilter">
-                        <option value="all">Все операции</option>
-                        <option value="expense">Только расходы</option>
-                        <option value="income">Только доходы</option>
-                    </select>
+                <div class="summary-card expense-card">
+                    <div class="summary-label">Расходы</div>
+                    <div class="summary-value" id="summaryExpenses">—</div>
+                </div>
+                <div class="summary-card balance-card">
+                    <div class="summary-label">Баланс</div>
+                    <div class="summary-value" id="summaryBalance">—</div>
                 </div>
             </div>
-            
+
+            <!-- Графики -->
             <div class="charts-container">
                 <div class="chart-box">
-                    <h3>Распределение по категориям</h3>
+                    <h3>Расходы по категориям</h3>
                     <div class="chart-wrapper">
                         <canvas id="categoryChart"></canvas>
                     </div>
+                    <p class="chart-empty" id="categoryEmpty" style="display:none;">Нет данных за выбранный период</p>
                 </div>
+
                 <div class="chart-box">
                     <h3>Динамика по месяцам</h3>
-                    <div class="chart-controls">
-                        <label class="toggle"><input type="checkbox" id="showIncome" checked> Доходы</label>
-                        <label class="toggle"><input type="checkbox" id="showExpenses" checked> Расходы</label>
-                        <label class="toggle"><input type="checkbox" id="showBalance"> Баланс</label>
-                    </div>
                     <div class="chart-wrapper">
                         <canvas id="monthlyChart"></canvas>
                     </div>
+                    <p class="chart-empty" id="monthlyEmpty" style="display:none;">Нет данных за выбранный период</p>
+                </div>
+            </div>
+
+            <!-- Последние операции -->
+            <div class="transactions-section">
+                <h3>Последние операции</h3>
+                <div id="transactionsList" class="transactions-list">
+                    <p class="loading-text">Загрузка...</p>
                 </div>
             </div>
         </div>
+
     </div>
 
+    <!-- Chart.js ОБЯЗАТЕЛЬНО до app.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="app.js"></script>
 </body>

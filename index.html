@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Считаем деньгиииии</title>
     <link rel="stylesheet" href="style.css">
@@ -80,7 +81,7 @@
             <div id="toast" class="toast hidden"></div>
         </div>
 
-        <!-- Дашборд (после формы) -->
+        <!-- Дашборд -->
         <div class="dashboard-wrapper" id="dashboardWrapper">
             <div class="dashboard-header" onclick="toggleDashboard()">
                 <h2>📊 Сводка бюджета</h2>
@@ -103,6 +104,19 @@
                         <div class="stat-value" id="totalBalance">--</div>
                         <div class="stat-label">Баланс</div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СПИСОК ОПЕРАЦИЙ (между дашбордом и аналитикой) -->
+        <div class="transactions-wrapper">
+            <div class="transactions-header" onclick="toggleTransactions()">
+                <h2>📝 Последние операции</h2>
+                <i class="fas fa-chevron-down" id="transactionsArrow"></i>
+            </div>
+            <div class="transactions-content" id="transactionsContent">
+                <div id="transactionsList" class="transactions-list">
+                    <div class="loading-text">Загрузка...</div>
                 </div>
             </div>
         </div>
@@ -161,14 +175,6 @@
                     <div class="chart-wrapper">
                         <canvas id="monthlyChart"></canvas>
                     </div>
-                </div>
-            </div>
-
-            <!-- Последние операции -->
-            <div class="recent-transactions">
-                <h3>Последние операции</h3>
-                <div id="transactionsList" class="transactions-list">
-                    <div class="loading-text">Загрузка...</div>
                 </div>
             </div>
         </div>

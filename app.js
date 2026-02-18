@@ -10,61 +10,83 @@ const CONFIG = {
 
 let charts = {};
 
-// Форматирование валюты
 function formatMoney(n) {
-  return new Intl.NumberFormat('ru-RU', {style: 'currency', currency: 'RUB', maximumFractionDigits: 0}).format(n);
+  return new Intl.NumberFormat('ru-RU', {style: 'currency', currency: 'RUB', maximumFractionDigits: 0}).format(n || 0);
 }
 
-// Переключение секций
 function toggleSection(name) {
   const content = document.getElementById(name + '-content');
   const icon = document.getElementById(name + '-icon');
-  content.classList.toggle('expanded');
-  icon.classList.toggle('rotated');
+  if (content && icon) {
+    content.classList.toggle('expanded');
+    icon.classList.toggle('rotated');
+  }
 }
 
-// Загрузка данных
 async function loadData() {
-  const period = document.getElementById('periodFilter').value;
-  const type = document.getElementById('typeFilter').value;
+  const period = document.getElementById('periodFilter')?.value || 'current_month';
+  const type = document.getElementById('typeFilter')?.value || 'all';
+  
+  console.log('Загрузка данных:', {period, type});
   
   try {
     const url = `${CONFIG.scriptURL}?action=getAnalytics&period=${period}&type=${type}`;
+    console.log('URL:', url);
+    
     const res = await fetch(url);
     const data = await res.json();
     
+    console.log('Ответ:', data);
+    
     if (data.status !== 'success') {
-      showToast('Ошибка загрузки', 'error');
+      console.error('Ошибка в ответе:', data);
+      showToast(data.message || 'Ошибка загрузки', 'error');
+      return;
+    }
+    
+    // Проверяем структуру данных
+    if (!data.summary) {
+      console.error('Нет summary в данных:', data);
+      showToast('Некорректные данные от сервера', 'error');
       return;
     }
     
     updateDashboard(data.summary);
-    updateTransactions(data.transactions);
+    updateTransactions(data.transactions || []);
     updateCharts(data);
     
   } catch (e) {
-    console.error(e);
+    console.error('Ошибка загрузки:', e);
     showToast('Ошибка соединения', 'error');
   }
 }
 
-// Обновление сводки
 function updateDashboard(summary) {
-  document.getElementById('totalIncome').textContent = formatMoney(summary.income);
-  document.getElementById('totalExpense').textContent = formatMoney(summary.expenses);
-  document.getElementById('totalBalance').textContent = formatMoney(summary.balance);
+  console.log('Обновление дашборда:', summary);
   
+  const incomeEl = document.getElementById('totalIncome');
+  const expenseEl = document.getElementById('totalExpense');
+  const balanceEl = document.getElementById('totalBalance');
   const card = document.getElementById('balanceCard');
-  if (summary.balance < 0) card.classList.add('negative');
-  else card.classList.remove('negative');
+  
+  if (incomeEl) incomeEl.textContent = formatMoney(summary.income);
+  if (expenseEl) expenseEl.textContent = formatMoney(summary.expenses);
+  if (balanceEl) balanceEl.textContent = formatMoney(summary.balance);
+  
+  if (card) {
+    if ((summary.balance || 0) < 0) card.classList.add('negative');
+    else card.classList.remove('negative');
+  }
 }
 
-// Обновление операций
 function updateTransactions(list) {
+  console.log('Обновление операций:', list);
+  
   const container = document.getElementById('transactionsList');
+  if (!container) return;
   
   if (!list || list.length === 0) {
-    container.innerHTML = '<div class="loading-text">Нет операций</div>';
+    container.innerHTML = '<div class="loading-text">Нет операций за выбранный период</div>';
     return;
   }
   
@@ -83,9 +105,9 @@ function updateTransactions(list) {
       <div class="transaction-item">
         <div class="transaction-icon">${icons[t.category] || '💸'}</div>
         <div class="transaction-info">
-          <div class="transaction-category">${t.category}</div>
+          <div class="transaction-category">${t.category || 'Без категории'}</div>
           ${t.description ? `<div class="transaction-description">${t.description}</div>` : ''}
-          <div class="transaction-date">${t.date}</div>
+          <div class="transaction-date">${t.date || '-'}</div>
         </div>
         <div class="transaction-amount ${isInc ? 'income' : 'expense'}">
           ${isInc ? '+' : '-'}${formatMoney(t.amount)}
@@ -95,16 +117,30 @@ function updateTransactions(list) {
   }).join('');
 }
 
-// Обновление графиков
 function updateCharts(data) {
+  console.log('Обновление графиков:', data);
+  
   // Уничтожаем старые
-  if (charts.category) charts.category.destroy();
-  if (charts.monthly) charts.monthly.destroy();
+  if (charts.category) {
+    charts.category.destroy();
+    charts.category = null;
+  }
+  if (charts.monthly) {
+    charts.monthly.destroy();
+    charts.monthly = null;
+  }
+  
+  // Проверяем данные
+  if (!data.categories || !data.monthly) {
+    console.error('Нет данных для графиков:', data);
+    return;
+  }
   
   // Круговой график
   const catCanvas = document.getElementById('categoryChart');
-  if (catCanvas && data.categories.labels.length > 0) {
-    charts.category = new Chart(catCanvas, {
+  if (catCanvas && data.categories.labels && data.categories.labels.length > 0) {
+    const ctx = catCanvas.getContext('2d');
+    charts.category = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: data.categories.labels,
@@ -132,23 +168,53 @@ function updateCharts(data) {
         }
       }
     });
+  } else if (catCanvas) {
+    // Очищаем canvas если нет данных
+    const ctx = catCanvas.getContext('2d');
+    ctx.clearRect(0, 0, catCanvas.width, catCanvas.height);
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#999';
+    ctx.textAlign = 'center';
+    ctx.fillText('Нет данных', catCanvas.width/2, catCanvas.height/2);
   }
   
   // Столбчатый график
-  const showInc = document.getElementById('showIncome').checked;
-  const showExp = document.getElementById('showExpenses').checked;
-  const showBal = document.getElementById('showBalance').checked;
+  const showInc = document.getElementById('showIncome')?.checked ?? true;
+  const showExp = document.getElementById('showExpenses')?.checked ?? true;
+  const showBal = document.getElementById('showBalance')?.checked ?? false;
   
   const datasets = [];
-  if (showInc) datasets.push({label: 'Доходы', data: data.monthly.income, backgroundColor: CONFIG.colors.income, borderRadius: 4});
-  if (showExp) datasets.push({label: 'Расходы', data: data.monthly.expenses, backgroundColor: CONFIG.colors.expenses, borderRadius: 4});
-  if (showBal) {
+  if (showInc && data.monthly.income) {
+    datasets.push({
+      label: 'Доходы', 
+      data: data.monthly.income, 
+      backgroundColor: CONFIG.colors.income, 
+      borderRadius: 4
+    });
+  }
+  if (showExp && data.monthly.expenses) {
+    datasets.push({
+      label: 'Расходы', 
+      data: data.monthly.expenses, 
+      backgroundColor: CONFIG.colors.expenses, 
+      borderRadius: 4
+    });
+  }
+  if (showBal && data.monthly.income && data.monthly.expenses) {
     const bal = data.monthly.income.map((v, i) => v - data.monthly.expenses[i]);
-    datasets.push({label: 'Баланс', data: bal, type: 'line', borderColor: CONFIG.colors.balance, borderWidth: 2, pointRadius: 4});
+    datasets.push({
+      label: 'Баланс', 
+      data: bal, 
+      type: 'line', 
+      borderColor: CONFIG.colors.balance, 
+      borderWidth: 2, 
+      pointRadius: 4
+    });
   }
   
-  if (datasets.length > 0) {
-    charts.monthly = new Chart(document.getElementById('monthlyChart'), {
+  const monCanvas = document.getElementById('monthlyChart');
+  if (monCanvas && datasets.length > 0 && data.monthly.labels && data.monthly.labels.length > 0) {
+    charts.monthly = new Chart(monCanvas.getContext('2d'), {
       type: 'bar',
       data: {
         labels: data.monthly.labels,
@@ -170,12 +236,14 @@ function updateCharts(data) {
 }
 
 // Отправка формы
-document.getElementById('budgetForm').addEventListener('submit', async (e) => {
+document.getElementById('budgetForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   
   const btn = document.getElementById('submitBtn');
   const txt = document.getElementById('buttonText');
   const spin = document.getElementById('spinner');
+  
+  if (!btn || !txt || !spin) return;
   
   btn.disabled = true;
   txt.textContent = 'Сохранение...';
@@ -192,13 +260,15 @@ document.getElementById('budgetForm').addEventListener('submit', async (e) => {
     if (data.status === 'success') {
       showToast('Сохранено! ✅');
       e.target.reset();
-      document.getElementById('date').value = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('date');
+      if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
       setTimeout(loadData, 500);
     } else {
       showToast(data.message || 'Ошибка', 'error');
     }
     
   } catch (err) {
+    console.error(err);
     showToast('Ошибка соединения', 'error');
   } finally {
     btn.disabled = false;
@@ -207,23 +277,35 @@ document.getElementById('budgetForm').addEventListener('submit', async (e) => {
   }
 });
 
-// Фильтры
-document.getElementById('periodFilter').addEventListener('change', loadData);
-document.getElementById('typeFilter').addEventListener('change', loadData);
+// Обработчики фильтров
+document.getElementById('periodFilter')?.addEventListener('change', loadData);
+document.getElementById('typeFilter')?.addEventListener('change', loadData);
 
 // Тогглы графика
 ['showIncome', 'showExpenses', 'showBalance'].forEach(id => {
-  document.getElementById(id).addEventListener('change', loadData);
+  document.getElementById(id)?.addEventListener('change', loadData);
 });
 
-// Тост
 function showToast(msg, type = 'success') {
   const t = document.getElementById('toast');
+  if (!t) return;
   t.textContent = msg;
   t.className = `toast show ${type}`;
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 // Инициализация
-document.getElementById('date').value = new Date().toISOString().split('T')[0];
-loadData();
+document.addEventListener('DOMContentLoaded', () => {
+  const dateInput = document.getElementById('date');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+  
+  // Разворачиваем секции по умолчанию
+  const transContent = document.getElementById('transactions-content');
+  const transIcon = document.getElementById('transactions-icon');
+  if (transContent && transIcon) {
+    transContent.classList.add('expanded');
+    transIcon.classList.add('rotated');
+  }
+  
+  loadData();
+});

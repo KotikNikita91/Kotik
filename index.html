@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Считаем деньгиииии</title>
@@ -12,23 +11,20 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="cat-icon.png">
     <meta name="apple-mobile-web-app-title" content="Бюджет">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="app-container">
-        <!-- Основная форма -->
+        <!-- Форма -->
         <div class="form-wrapper">
             <h1>Считаем деньгиииии</h1>
             <form id="budgetForm">
                 <div class="form-group">
-                    <label for="date">Дата:</label>
+                    <label>Дата:</label>
                     <input type="date" id="date" name="date" required>
                 </div>
-                
                 <div class="form-group">
-                    <label for="category">Категория:</label>
+                    <label>Категория:</label>
                     <select id="category" name="category" required>
                         <option value="">Выберите категорию</option>
                         <option value="🛒 Продукты">🛒 Продукты</option>
@@ -44,88 +40,82 @@
                         <option value="💄 Косметика">💄 Косметика</option>
                         <option value="💡 Коммуналка">💡 Коммуналка</option>
                         <option value="🏡 Ипотека">🏡 Ипотека</option>
-                        <option value="🛏 Аренда">🛏 Аренда</option>     
+                        <option value="🛏 Аренда">🛏 Аренда</option>
                         <option value="🚕 Такси/Общ. транспорт">🚕 Такси/Общ. транспорт</option>
-                        <option value="✈️ Авиа / ЖД билеты">✈️ Авиа / ЖД билеты</option> 
-                        <option value="🌎 Отпуск">🌎 Отпуск</option> 
+                        <option value="✈️ Авиа / ЖД билеты">✈️ Авиа / ЖД билеты</option>
+                        <option value="🌎 Отпуск">🌎 Отпуск</option>
                         <option value="❗ Непредвиденное">❗ Непредвиденное</option>
                         <option value="🥊🏈⚽️ Спорт">🥊🏈⚽️ Спорт</option>
                         <option value="💰 Доход">💰 Доход</option>
                     </select>
                 </div>
-                
                 <div class="form-group">
-                    <label for="sum">Сумма:</label>
+                    <label>Сумма:</label>
                     <input type="number" id="sum" name="sum" placeholder="Введите сумму" required>
                 </div>
-                
                 <div class="form-group">
-                    <label for="description">Описание:</label>
+                    <label>Описание:</label>
                     <input type="text" id="description" name="description" placeholder="Краткое описание">
                 </div>
-                
                 <div class="form-group">
-                    <label for="type">Тип операции:</label>
+                    <label>Тип:</label>
                     <select id="type" name="type" required>
                         <option value="Расход">Расход</option>
                         <option value="Доход">Доход</option>
                     </select>
                 </div>
-                
                 <button type="submit" id="submitBtn">
                     <span id="buttonText">Сохранить</span>
                     <div id="spinner" class="spinner hidden"></div>
                 </button>
             </form>
-            
             <div id="toast" class="toast hidden"></div>
         </div>
 
-        <!-- Дашборд -->
-        <div class="dashboard-wrapper" id="dashboardWrapper">
-            <div class="dashboard-header" onclick="toggleDashboard()">
+        <!-- Сводка -->
+        <div class="section-wrapper">
+            <div class="section-header" onclick="toggleSection('dashboard')">
                 <h2>📊 Сводка бюджета</h2>
-                <i class="fas fa-chevron-down" id="dashboardArrow"></i>
+                <i class="fas fa-chevron-down" id="dashboard-icon"></i>
             </div>
-            <div class="dashboard-content" id="dashboardContent">
+            <div class="section-content" id="dashboard-content">
                 <div class="stats-grid">
                     <div class="stat-card income">
                         <i class="fas fa-arrow-up"></i>
-                        <div class="stat-value" id="totalIncome">--</div>
+                        <div class="stat-value" id="totalIncome">0 ₽</div>
                         <div class="stat-label">Доходы</div>
                     </div>
                     <div class="stat-card expense">
                         <i class="fas fa-arrow-down"></i>
-                        <div class="stat-value" id="totalExpense">--</div>
+                        <div class="stat-value" id="totalExpense">0 ₽</div>
                         <div class="stat-label">Расходы</div>
                     </div>
                     <div class="stat-card balance" id="balanceCard">
                         <i class="fas fa-wallet"></i>
-                        <div class="stat-value" id="totalBalance">--</div>
+                        <div class="stat-value" id="totalBalance">0 ₽</div>
                         <div class="stat-label">Баланс</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- СПИСОК ОПЕРАЦИЙ (между дашбордом и аналитикой) -->
-        <div class="transactions-wrapper">
-            <div class="transactions-header" onclick="toggleTransactions()">
+        <!-- Операции -->
+        <div class="section-wrapper">
+            <div class="section-header" onclick="toggleSection('transactions')">
                 <h2>📝 Последние операции</h2>
-                <i class="fas fa-chevron-down" id="transactionsArrow"></i>
+                <i class="fas fa-chevron-down" id="transactions-icon"></i>
             </div>
-            <div class="transactions-content" id="transactionsContent">
+            <div class="section-content expanded" id="transactions-content">
                 <div id="transactionsList" class="transactions-list">
                     <div class="loading-text">Загрузка...</div>
                 </div>
             </div>
         </div>
 
-        <!-- Блок аналитики -->
+        <!-- Аналитика -->
         <div class="analytics-wrapper">
-            <h2>Аналитика бюджета</h2>
+            <h2>📈 Аналитика бюджета</h2>
             
-            <!-- Фильтры -->
             <div class="filters-container">
                 <div class="filter-group">
                     <label>Период:</label>
@@ -137,7 +127,6 @@
                         <option value="year">Этот год</option>
                     </select>
                 </div>
-                
                 <div class="filter-group">
                     <label>Тип:</label>
                     <select id="typeFilter">
@@ -155,22 +144,12 @@
                         <canvas id="categoryChart"></canvas>
                     </div>
                 </div>
-                
                 <div class="chart-box">
                     <h3>Динамика по месяцам</h3>
                     <div class="chart-controls">
-                        <label class="toggle">
-                            <input type="checkbox" id="showIncome" checked>
-                            <span>Доходы</span>
-                        </label>
-                        <label class="toggle">
-                            <input type="checkbox" id="showExpenses" checked>
-                            <span>Расходы</span>
-                        </label>
-                        <label class="toggle">
-                            <input type="checkbox" id="showBalance">
-                            <span>Баланс</span>
-                        </label>
+                        <label class="toggle"><input type="checkbox" id="showIncome" checked> Доходы</label>
+                        <label class="toggle"><input type="checkbox" id="showExpenses" checked> Расходы</label>
+                        <label class="toggle"><input type="checkbox" id="showBalance"> Баланс</label>
                     </div>
                     <div class="chart-wrapper">
                         <canvas id="monthlyChart"></canvas>

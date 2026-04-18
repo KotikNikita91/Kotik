@@ -1,7 +1,7 @@
 // Конфигурация приложения
 const CONFIG = {
   // ВАШ URL Google Apps Script (используется и для POST, и для GET)
-  scriptURL: 'https://script.google.com/macros/s/AKfycbxKO5p5ZNnbzMzJP2SwUdBhfCObgX0ZDYFBxcC9A3cFGaPufSbt-gwaieYPmDr9SMA/exec',
+  scriptURL: 'https://script.google.com/macros/s/AKfycbxNFAEsdDx9M86ud1hMC4A2XMPNNPqz5rLmO3LSbnfH9BjHidAdaU-akcUJfpwFE31tdw/exec',
   maxMobileWidth: 500,
   storageKeys: {
     city: 'family_budget_city'

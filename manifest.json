@@ -1,0 +1,23 @@
+{
+  "name": "Считаем деньгиииии",
+  "short_name": "Бюджет",
+  "description": "Личный бюджет",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#6a8f7e",
+  "theme_color": "#6a8f7e",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "cat-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

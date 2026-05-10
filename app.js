@@ -1,6 +1,6 @@
 // Конфигурация
 const CONFIG = {
-  scriptURL: 'https://script.google.com/macros/s/AKfycbxNFAEsdDx9M86ud1hMC4A2XMPNNPqz5rLmO3LSbnfH9BjHidAdaU-akcUJfpwFE31tdw/exec',
+  scriptURL: 'https://script.google.com/macros/s/AKfycbzAbS0ZKAuGI4CQrBGL8-JPTSvWDGWuph8AzcFbtrK6weaQnUf5wWkbjbzxuVs022q3lw/exec',
   maxMobileWidth: 500,
   storageKeys: {
     city: 'family_budget_city',

@@ -1,4 +1,4 @@
-const CACHE = 'kotik-v3';
+const CACHE = 'kotik-v4';
 const SHELL = ['./', './index.html', './app.js', './style.css', './manifest.json', './icon.png', './cat-icon.png'];
 
 self.addEventListener('install', e => {

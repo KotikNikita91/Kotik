@@ -1,5 +1,5 @@
-const CACHE = 'kotik-v1';
-const SHELL = ['./', './index.html', './app.js', './style.css', './icon.png', './cat-icon.png'];
+const CACHE = 'kotik-v3';
+const SHELL = ['./', './index.html', './app.js', './style.css', './manifest.json', './icon.png', './cat-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));

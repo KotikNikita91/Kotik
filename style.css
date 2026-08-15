@@ -770,12 +770,15 @@ canvas {
 
 .show-more-btn:active { transform: scale(0.97); }
 
-/* ===== ТОСТ-УВЕДОМЛЕНИЯ (сверху, поверх всего) ===== */
+/* ===== ТОСТ-УВЕДОМЛЕНИЯ =====
+   Элемент лежит прямо в <body>: backdrop-filter у .form-wrapper
+   создаёт containing block и position:fixed внутри неё перестаёт
+   работать относительно экрана. */
 .toast {
   position: fixed;
-  top: calc(14px + env(safe-area-inset-top));
+  bottom: calc(18px + env(safe-area-inset-bottom));
   left: 50%;
-  transform: translateX(-50%) translateY(-18px);
+  transform: translateX(-50%) translateY(18px);
   background: rgba(52, 44, 74, 0.97);
   color: #fff;
   padding: 11px 16px;

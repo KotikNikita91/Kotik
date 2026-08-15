@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#6a8f7e">
+  <meta name="theme-color" content="#9e8dc6">
   <title>Считаем деньгиииии</title>
   <link rel="manifest" href="manifest.json">
   <script>!function(){var t=localStorage.getItem('kotik_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t)}();</script>
@@ -33,22 +33,22 @@
         </button>
       </div>
 
-      <div class="city-toggle" aria-label="Город">
-        <div class="city-toggle__label">Город</div>
-        <button type="button" id="cityMskBtn" class="city-pill" aria-pressed="false" title="Помечать операции как Мск">
-          Мск
-        </button>
-        <div class="city-toggle__hint" id="cityHint">по умолчанию — Тюмень</div>
+      <div class="city-toggle">
+        <span class="city-toggle__label">Город</span>
+        <div class="city-seg" id="citySeg" role="group" aria-label="Выбор города">
+          <button type="button" class="city-seg-btn active" data-city="">Тюмень</button>
+          <button type="button" class="city-seg-btn" data-city="Мск">Мск</button>
+        </div>
       </div>
 
       <form id="budgetForm">
         <div class="form-group">
-          <label for="date">Дата:</label>
+          <label for="date">Дата</label>
           <input type="date" id="date" name="date" required>
         </div>
 
         <div class="form-group">
-          <label>Категория:</label>
+          <label>Категория</label>
           <div class="category-grid" id="categoryGrid" role="group" aria-label="Выберите категорию">
             <button type="button" class="cat-btn" data-value="🛒 Продукты"><span class="cat-emoji">🛒</span><span class="cat-label">Продукты</span></button>
             <button type="button" class="cat-btn" data-value="🏥 Здоровье"><span class="cat-emoji">🏥</span><span class="cat-label">Здоровье</span></button>
@@ -75,7 +75,7 @@
         </div>
 
         <div class="form-group">
-          <label for="sum">Сумма:</label>
+          <label for="sum">Сумма</label>
           <input type="text" inputmode="decimal" id="sum" name="sum" placeholder="Введите сумму" required>
           <div class="quick-amounts">
             <button type="button" class="quick-amt" data-value="100">100</button>
@@ -86,7 +86,7 @@
         </div>
 
         <div class="form-group">
-          <label for="description">Описание:</label>
+          <label for="description">Описание</label>
           <input type="text" id="description" name="description" placeholder="Краткое описание">
         </div>
 
@@ -105,7 +105,7 @@
 
       <!-- Фильтр периода -->
       <div class="filter-bar">
-        <label for="periodFilter">Период:</label>
+        <label for="periodFilter">Период</label>
         <select id="periodFilter">
           <option value="current_month">Текущий месяц</option>
           <option value="last_month">Прошлый месяц</option>

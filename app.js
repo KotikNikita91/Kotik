@@ -1,6 +1,6 @@
 // Конфигурация
 const CONFIG = {
-  scriptURL: 'https://script.google.com/macros/s/AKfycbx3AU3nrZpphsVyMtYGC-KpD7OXCZz67lbfBiiXX1672hx7q6wLY6z5-ICbwQkl-xTj/exec',
+  scriptURL: 'https://script.google.com/macros/s/AKfycbxNFAEsdDx9M86ud1hMC4A2XMPNNPqz5rLmO3LSbnfH9BjHidAdaU-akcUJfpwFE31tdw/exec',
   maxMobileWidth: 500,
   storageKeys: {
     city: 'family_budget_city',
@@ -8,9 +8,9 @@ const CONFIG = {
   },
   cityTags: { msk: 'Мск' },
   colors: {
-    categories: ['#9bc4b2', '#7daf95', '#6a8f7e', '#b8d5c5', '#88c9a1', '#a8d7b9', '#e1a692', '#d4b896'],
-    income: '#7daf95',
-    expenses: '#e1a692'
+    categories: ['#b9a9dc', '#9d8bc9', '#c9a3d4', '#a8b4e0', '#d4b3dd', '#8f9ad4', '#cbb8ea', '#e0b5cf'],
+    income: '#7fbf9a',
+    expenses: '#d49ab5'
   }
 };
 
@@ -43,8 +43,7 @@ const DOM = {
   transactionsList: document.getElementById('transactionsList'),
   categoryEmpty: document.getElementById('categoryEmpty'),
   monthlyEmpty: document.getElementById('monthlyEmpty'),
-  cityMskBtn: document.getElementById('cityMskBtn'),
-  cityHint: document.getElementById('cityHint'),
+  citySeg: document.getElementById('citySeg'),
   offlineBanner: document.getElementById('offlineBanner'),
   showMoreBtn: document.getElementById('showMoreBtn'),
   themeToggle: document.getElementById('themeToggle'),
@@ -176,22 +175,21 @@ function setCityTag(city) {
     else localStorage.removeItem(CONFIG.storageKeys.city);
   } catch (_) {}
 
-  const isMsk = state.city === CONFIG.cityTags.msk;
-  if (DOM.cityMskBtn) {
-    DOM.cityMskBtn.classList.toggle('active', isMsk);
-    DOM.cityMskBtn.setAttribute('aria-pressed', String(isMsk));
-  }
-  if (DOM.cityHint) {
-    DOM.cityHint.textContent = state.city ? `активно: ${state.city}` : 'по умолчанию — Тюмень';
-  }
+  DOM.citySeg?.querySelectorAll('.city-seg-btn').forEach(btn => {
+    btn.classList.toggle('active', (btn.dataset.city || '') === state.city);
+  });
 }
 
 function initCityToggle() {
   let saved = '';
   try { saved = localStorage.getItem(CONFIG.storageKeys.city) || ''; } catch (_) {}
   setCityTag(saved);
-  DOM.cityMskBtn?.addEventListener('click', () => {
-    setCityTag(state.city === CONFIG.cityTags.msk ? '' : CONFIG.cityTags.msk);
+
+  DOM.citySeg?.addEventListener('click', e => {
+    const btn = e.target.closest('.city-seg-btn');
+    if (!btn) return;
+    setCityTag(btn.dataset.city || '');
+    if (navigator.vibrate) navigator.vibrate(10);
   });
 }
 
